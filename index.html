@@ -1,0 +1,1769 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Recordo</title>
+<meta name="description" content="拍照把笔记理顺排版，原文一字不改，生成可编辑的思维导图和段落总结。">
+<meta name="theme-color" content="#FFFFFF">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon-64.png" sizes="64x64" type="image/png">
+<link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Recordo">
+<meta name="format-detection" content="telephone=no">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: Light, single-theme phone app — white canvas, hairline dividers, one lime-to-teal green accent; screens over a bottom tab bar with a centred camera button; documents open full-screen with underlined 原文 / 笔记 / 导图 tabs */
+:root{
+  --bg:#FFFFFF; --surface:#FFFFFF; --surface2:#F5F8F6; --ink:#1D2420; --muted:#68746D; --line:#DCE3DF; --hair:#EAEFEC;
+  --accent:#00A67E; --accent-deep:#00855F; --accent-ink:#FFFFFF; --accent-soft:#E3F7EE;
+  --grad:linear-gradient(120deg,#5ED62B 0%,#14B86E 45%,#00968A 100%);
+  --mark:#D6F5E3; --mark-ink:#0B4A33;
+  --ok:#00855F; --ok-soft:#E3F7EE; --warn:#C13515; --warn-soft:#FFF1EE;
+  --b1:#00A67E; --b2:#2F7BEA; --b3:#F08A3C; --b4:#8E5CD9; --b5:#DB4F7A;
+  --shadow:0 6px 16px rgba(16,40,28,.12); --shadow-sm:0 1px 2px rgba(16,40,28,.08),0 4px 12px rgba(16,40,28,.05); --scrim:rgba(10,20,15,.45);
+  --r:12px; --r-btn:8px;
+  --ui:"Figtree","Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --mono:"JetBrains Mono","SFMono-Regular",Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{overflow-x:hidden;background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:15px;line-height:1.5;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+button{font:inherit;color:inherit}
+.ic{width:24px;height:24px;flex:none;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.ic.sm{width:18px;height:18px;stroke-width:1.8}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none}
+.pad{padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px))}
+@media (max-width:360px){.pad{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}}
+
+/* ---- shell ---- */
+#app{height:100%;width:100%;max-width:760px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;overflow:hidden;position:relative;background:var(--bg)}
+@media (min-width:800px){#app{border-inline:1px solid var(--hair)}}
+.screen{display:flex;flex-direction:column;min-height:0;min-width:0;overflow:hidden}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;min-width:0;min-height:0;-webkit-overflow-scrolling:touch}
+.appbar{flex:none;display:flex;align-items:center;gap:8px;min-height:64px;padding-block:12px 4px}
+.appbar h1{margin:0;font-size:30px;font-weight:700;letter-spacing:-.01em;flex:1}
+.appbar h1.brand{font-size:28px;font-weight:800;letter-spacing:-.02em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+.iconbtn{width:40px;height:40px;border:0;background:none;border-radius:50%;display:inline-grid;place-items:center;cursor:pointer;color:var(--ink);flex:none}
+.iconbtn:hover{background:var(--surface2)}
+.iconbtn:active{transform:scale(.94)}
+.iconbtn:disabled{opacity:.35;cursor:default}
+.iconbtn.ring{border:1px solid var(--line);background:var(--surface)}
+
+/* ---- tab bar ---- */
+.tabbar{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center;background:var(--surface);border-top:1px solid var(--hair);padding-block:6px 4px;position:relative;z-index:5}
+.tab{border:0;background:none;display:grid;justify-items:center;gap:3px;padding:4px 0;font-size:10px;font-weight:500;color:var(--muted);cursor:pointer;letter-spacing:.02em}
+.tab .ic{width:26px;height:26px}
+.tab[aria-current="page"]{color:var(--accent);font-weight:600}
+.fabslot{display:grid;justify-items:center}
+.fab{width:56px;height:56px;margin-top:-18px;border-radius:50%;border:0;background:var(--grad);color:#fff;display:grid;place-items:center;cursor:pointer;box-shadow:0 6px 18px rgba(0,150,110,.38);position:relative}
+.fab .ic{width:26px;height:26px;stroke-width:1.8}
+.fab .plus{position:absolute;right:2px;bottom:2px;width:18px;height:18px;border-radius:50%;background:#fff;color:var(--accent-deep);display:grid;place-items:center;font-size:14px;font-weight:800;line-height:1;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.fab:active{transform:scale(.95)}
+
+/* ---- home ---- */
+.home{display:grid;grid-template-columns:minmax(0,1fr);gap:28px;padding-block:8px 32px}
+.searchpill{min-width:0;display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:999px;padding:10px 10px 10px 20px;background:var(--surface);box-shadow:var(--shadow-sm);cursor:pointer;text-align:left;width:100%}
+.searchpill .t{font-weight:600;font-size:14px}
+.searchpill .s{font-size:12px;color:var(--muted)}
+.searchpill .go{margin-left:auto;width:36px;height:36px;border-radius:50%;background:var(--grad);color:#fff;display:grid;place-items:center}
+.searchpill .go .ic{width:16px;height:16px;stroke-width:2.4}
+.scan{min-width:0;border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);background:var(--surface);display:grid;grid-template-columns:minmax(0,1fr)}
+.scan-art{position:relative;overflow:hidden;display:block;min-width:0}
+.scan-art svg{display:block;width:100%;height:auto;max-width:100%}
+.scan-art img{width:100%;height:100%;object-fit:cover;display:block;opacity:.92}
+.scan-art .frame{position:absolute;inset:14% 16%;border-radius:10px}
+.scan-art .frame i{position:absolute;width:22px;height:22px;border:3px solid #fff}
+.scan-art .frame i:nth-child(1){left:0;top:0;border-right:0;border-bottom:0;border-top-left-radius:8px}
+.scan-art .frame i:nth-child(2){right:0;top:0;border-left:0;border-bottom:0;border-top-right-radius:8px}
+.scan-art .frame i:nth-child(3){left:0;bottom:0;border-right:0;border-top:0;border-bottom-left-radius:8px}
+.scan-art .frame i:nth-child(4){right:0;bottom:0;border-left:0;border-top:0;border-bottom-right-radius:8px}
+.scan-art .badge{position:absolute;right:12px;bottom:12px;background:#fff;color:#222;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;box-shadow:0 2px 6px rgba(0,0,0,.18)}
+.scan-body{padding:16px;display:grid;gap:14px;min-width:0}
+.scan-txt{min-width:0;display:grid;gap:2px}
+.scan-txt .h{font-size:20px;font-weight:700;letter-spacing:-.01em}
+.scan-txt .p{font-size:14px;color:var(--muted)}
+.scan-cta{display:inline-flex;align-items:center;gap:8px;background:var(--grad);color:#fff;font-weight:700;font-size:15px;padding:12px 18px;border-radius:999px;box-shadow:0 4px 12px rgba(0,150,110,.3)}
+.scan-cta .ic{width:20px;height:20px;stroke-width:2}
+.scan h2{margin:0;font-size:20px;font-weight:700;letter-spacing:-.01em}
+.scan p{margin:2px 0 0;font-size:14px;color:var(--muted)}
+.scan-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.pill{min-width:0;white-space:nowrap;border-radius:var(--r-btn);padding:13px 10px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:600;cursor:pointer;border:1px solid transparent}
+.pill.solid{background:var(--grad);color:#fff}
+.pill.ghost{background:var(--surface);color:var(--ink);border-color:var(--ink)}
+.pill:active{transform:scale(.98)}
+.flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.flow-step{min-width:0;display:grid;gap:8px;font-size:12px;color:var(--muted);padding:14px 12px;border:1px solid var(--hair);border-radius:var(--r)}
+.flow-step .dot{color:var(--ink)}
+.flow-step .dot .ic{width:28px;height:28px}
+.flow-step b{color:var(--ink);font-weight:600;font-size:14px;display:block}
+.flow .arr{display:none}
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;margin:0 0 14px}
+.sec-h h3{margin:0;font-size:22px;font-weight:700;letter-spacing:-.01em}
+.link{border:0;background:none;color:var(--ink);font-size:14px;font-weight:600;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:4px}
+.cards{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(150px,46%);gap:16px;overflow-x:auto;padding-bottom:4px;scroll-snap-type:x mandatory}
+@media (min-width:600px){.cards{grid-auto-flow:row;grid-template-columns:repeat(3,1fr)}}
+.card{border:0;background:none;padding:0;text-align:left;cursor:pointer;scroll-snap-align:start;display:grid;gap:8px;min-width:0}
+.card .thumb{aspect-ratio:1/1;border-radius:var(--r);background:var(--surface2);display:grid;place-items:center;color:var(--muted);overflow:hidden;position:relative}
+.card .thumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s}
+.card:hover .thumb img{transform:scale(1.03)}
+.card .heart{position:absolute;right:10px;top:10px;color:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
+.card .heart .ic{fill:var(--accent);stroke:#fff;stroke-width:1.6}
+.card .meta{display:grid;gap:1px;min-width:0}
+.card .t{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .d{font-size:14px;color:var(--muted)}
+
+/* ---- lists ---- */
+.search{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:999px;padding:0 18px;height:48px;color:var(--ink);margin:4px 0 20px;box-shadow:var(--shadow-sm);background:var(--surface)}
+.search input{flex:1;min-width:0;border:0;background:none;font:inherit;color:var(--ink);outline:none}
+.search input::placeholder{color:var(--muted)}
+.list{display:grid}
+.row{display:flex;align-items:center;gap:16px;padding:14px 0;border:0;background:none;text-align:left;cursor:pointer;width:100%;min-width:0}
+.row + .row{border-top:1px solid var(--hair)}
+.row .th{width:64px;height:64px;border-radius:var(--r-btn);background:var(--surface2);flex:none;overflow:hidden;display:grid;place-items:center;color:var(--muted)}
+.row .th img{width:100%;height:100%;object-fit:cover}
+.row .body{flex:1;min-width:0;display:grid;gap:3px}
+.row .t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .d{font-size:14px;color:var(--muted);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.row .chev{color:var(--ink)}
+.tagx{font-size:12px;font-weight:600;padding:1px 8px;border-radius:999px;border:1px solid var(--line);color:var(--ink)}
+.tagx.warn{border-color:var(--warn);color:var(--warn)}
+.star-on{color:var(--accent);display:inline-flex}
+.star-on .ic{fill:var(--accent)}
+.empty{display:grid;justify-items:center;gap:8px;text-align:center;padding:56px 20px;color:var(--muted)}
+.empty .big{width:56px;height:56px;display:grid;place-items:center;color:var(--ink)}
+.empty .big .ic{width:44px;height:44px;stroke-width:1.3}
+.empty b{color:var(--ink);font-size:18px;font-weight:700}
+
+/* ---- me ---- */
+.group-h{font-size:20px;font-weight:700;margin:28px 0 4px;color:var(--ink)}
+.setrow{display:flex;align-items:center;gap:16px;padding:16px 0;min-height:56px}
+.setrow + .setrow{border-top:1px solid var(--hair)}
+.setrow .lbl{flex:1;min-width:0}
+.setrow .sub{font-size:13px;color:var(--muted)}
+.ico-c{width:28px;height:28px;display:grid;place-items:center;flex:none;color:var(--ink)}
+.ico-c.ok{color:var(--ok)}
+.ico-c.no{color:var(--warn)}
+.danger{color:var(--warn)}
+.setrow.row{padding:16px 0}
+
+/* segmented → Airbnb-style underlined tabs */
+.seg{display:inline-flex;gap:24px;background:none;padding:0}
+.seg button{border:0;background:none;padding:8px 0 10px;font-size:15px;font-weight:500;color:var(--muted);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;border-radius:0}
+.seg button:hover{color:var(--ink)}
+.seg button[aria-selected="true"],.seg button[aria-pressed="true"]{color:var(--ink);font-weight:600;border-bottom-color:var(--ink)}
+#defView{gap:6px}
+#defView button{border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:14px}
+#defView button[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+
+/* ---- document screen ---- */
+.dochead{flex:none;display:grid;gap:4px;padding-block:4px 0;background:var(--bg);border-bottom:1px solid var(--hair)}
+.dochead .appbar{min-height:52px;padding-block:4px 0;gap:4px}
+.doc-title{flex:1;min-width:0;border:0;background:none;text-align:left;font-size:17px;font-weight:700;cursor:pointer;padding:6px 4px;border-radius:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.doc-sub{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;font-size:12px;font-weight:600;padding:5px 11px;display:inline-flex;gap:4px;align-items:center;cursor:pointer;white-space:nowrap;margin-bottom:8px}
+.chip.ok{color:var(--ok)}
+.chip.bad{color:var(--warn);border-color:var(--warn)}
+.chip .ic{width:14px;height:14px;stroke-width:2.6}
+.checkd{font-size:14px;color:var(--muted);padding:2px 0 14px;display:grid;gap:10px}
+.checkd p{margin:0}
+.checkd code{font-family:var(--mono);font-size:12px;background:var(--mark);color:var(--mark-ink);padding:0 4px;border-radius:3px;word-break:break-all}
+.checkd .acts{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--ink);background:var(--surface);color:var(--ink);border-radius:var(--r-btn);padding:9px 14px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.btn.primary{background:var(--grad);border-color:transparent;color:#fff}
+.btn:active{transform:scale(.98)}
+.docbody{flex:1;min-height:0;position:relative;display:flex;flex-direction:column}
+.view{flex:1;min-height:0;overflow:auto}
+.view-in{padding-block:20px 40px;display:grid;gap:16px}
+.paper{background:var(--surface)}
+#v-raw .paper{border:1px solid var(--hair);border-radius:var(--r);padding:18px 16px}
+.photo{border-radius:var(--r);overflow:hidden;background:#2A2A2A;max-height:280px;display:grid;place-items:center}
+.photo img{max-width:100%;max-height:280px;object-fit:contain;display:block}
+.cap{font-size:13px;font-weight:600;color:var(--ink);margin:0;display:flex;gap:6px;align-items:center}
+pre.raw{margin:0;font-family:var(--mono);font-size:13px;line-height:1.8;white-space:pre-wrap;word-break:break-all}
+pre.raw mark{background:var(--mark);color:var(--mark-ink);border-radius:2px}
+.rawedit{display:block;width:100%;box-sizing:border-box;min-height:300px;margin:0;padding:0;font-family:var(--mono);font-size:13px;line-height:1.8;color:var(--ink);background:none;border:0;resize:none;outline:none}
+
+/* notes (always editable) */
+.notes{display:grid;gap:2px}
+.erow{display:flex;gap:8px;align-items:baseline;border-radius:8px;padding:4px 6px;margin-inline:-6px}
+.erow.t-h1{margin-bottom:8px}
+.erow.t-h2{margin-top:16px}
+.erow.sel{background:var(--surface2)}
+.erow .bul{flex:none;width:1em;color:var(--ink);text-align:center;user-select:none}
+.etext{flex:1;min-width:0;outline:none;white-space:pre-wrap;word-break:break-word;border-radius:3px;-webkit-user-select:text;user-select:text;line-height:1.65}
+.etext:empty::before{content:"输入文字";color:var(--muted)}
+.t-h1 .etext{font-size:26px;line-height:1.3;font-weight:700;letter-spacing:-.01em;text-wrap:balance}
+.t-h2 .etext{font-size:19px;line-height:1.4;font-weight:700}
+.ebar{display:flex;gap:2px;align-items:center;padding:6px;margin:6px 0 10px;border-radius:var(--r);background:var(--surface);border:1px solid var(--hair);box-shadow:var(--shadow);overflow-x:auto}
+.ebar button{border:0;background:none;border-radius:8px;min-width:38px;height:36px;padding:0 8px;display:inline-grid;place-items:center;cursor:pointer;font-size:13px;font-weight:700;color:var(--ink);flex:none}
+.ebar button:hover{background:var(--surface2)}
+.ebar button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.ebar button:disabled{opacity:.3;cursor:default}
+.ebar .sep{width:1px;height:20px;background:var(--line);flex:none;margin:0 4px}
+.ebar .del{color:var(--warn)}
+
+/* summary */
+.sum-card{display:grid;gap:16px}
+.sum-tag{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--accent-deep);background:var(--accent-soft);border-radius:999px;padding:5px 12px;justify-self:start}
+.sum-tag .ic{width:15px;height:15px}
+.sum-lead{margin:0;font-size:19px;line-height:1.65;font-weight:500;letter-spacing:-.005em;outline:none;border-radius:6px}
+.sum-sec{display:grid;gap:6px;padding-top:16px;border-top:1px solid var(--hair)}
+.sum-sec h3{margin:0;font-size:16px;font-weight:700}
+.sum-sec p{margin:0;line-height:1.8;outline:none;border-radius:6px}
+.sum-card p[data-k]:focus{background:var(--surface2);box-shadow:0 0 0 6px var(--surface2)}
+.sum-foot{font-size:12px;color:var(--muted);margin:4px 0 0}
+.sum-stale{display:flex;align-items:center;gap:8px;font-size:14px;background:var(--surface2);border-radius:var(--r);padding:10px 14px;flex-wrap:wrap}
+.sum-stale .link{margin-left:auto}
+.sum-empty{display:grid;justify-items:center;gap:10px;text-align:center;padding:28px 8px;color:var(--muted)}
+.sum-empty svg{margin-bottom:6px;max-width:100%}
+.sum-empty b{font-size:18px;font-weight:700;color:var(--ink)}
+.sum-empty > span{max-width:30ch;font-size:14px}
+.sum-empty .btn{margin-top:6px}
+.skel{display:grid;gap:10px}
+.skel i{display:block;height:12px;border-radius:6px;background:linear-gradient(90deg,var(--surface2) 0%,var(--hair) 50%,var(--surface2) 100%);background-size:200% 100%}
+.skel.big i{height:16px}
+@media (prefers-reduced-motion:no-preference){.skel i{animation:shimmer 1.4s linear infinite}@keyframes shimmer{from{background-position:200% 0}to{background-position:-200% 0}}}
+
+/* map */
+#v-map{overflow:hidden;position:relative}
+.map-wrap{position:absolute;inset:0;overflow:auto;touch-action:pan-x pan-y;background:radial-gradient(circle,var(--line) 1px,transparent 1.3px) 0 0/24px 24px,var(--surface2)}
+#map{display:block}
+#map .edge{fill:none;stroke-width:1.8}
+#map .label{font-family:var(--ui);font-size:13px;fill:var(--ink);pointer-events:none}
+#map .root .label{font-size:15px;font-weight:700;fill:#fff}
+#map .root .box{fill:var(--accent);stroke:var(--accent)}
+#map g.node{cursor:pointer;outline:none}
+#map g.node .box{filter:drop-shadow(0 1px 2px rgba(0,0,0,.08))}
+#map g.node.sel .box{fill:var(--accent-soft)}
+#map g.node.root.sel .box{fill:var(--accent-deep)}
+#map g.node .ring{stroke:var(--ink);stroke-width:2;fill:none}
+#map .knob{fill:var(--surface);stroke-width:1.4}
+#map .knob-hit{fill:transparent;cursor:pointer}
+#map .knob-t{font-family:var(--ui);font-weight:700;font-size:10px;text-anchor:middle;pointer-events:none}
+.medit{position:absolute;color:var(--ink);background:var(--surface);border:2px solid var(--ink);border-radius:10px;padding:5px 10px;resize:none;outline:none;box-shadow:var(--shadow);z-index:3;font-family:var(--ui)}
+.floatbar{position:absolute;z-index:4;display:flex;align-items:center;gap:2px;background:var(--surface);border:1px solid var(--hair);border-radius:999px;box-shadow:var(--shadow);padding:4px}
+.floatbar button{border:0;background:none;border-radius:999px;height:40px;min-width:40px;padding:0 8px;display:inline-flex;align-items:center;justify-content:center;gap:4px;cursor:pointer;font-size:12px;font-weight:600;color:var(--ink)}
+.floatbar button:hover{background:var(--surface2)}
+.floatbar button:disabled{opacity:.3;cursor:default}
+.floatbar .del{color:var(--warn)}
+.zoombar{right:max(16px,env(safe-area-inset-right,0px));bottom:16px}
+.zoombar #zPct{font-size:13px;min-width:54px;font-variant-numeric:tabular-nums}
+.nodebar{left:50%;transform:translateX(-50%);top:14px;max-width:calc(100% - 24px);overflow-x:auto;border-radius:16px}
+.nodebar button{flex-direction:column;gap:1px;height:50px;font-size:11px;min-width:54px;border-radius:12px}
+
+/* bottom toolbar inside a document */
+.docbar{flex:none;display:flex;justify-content:space-around;align-items:center;gap:4px;border-top:1px solid var(--hair);background:var(--surface);padding-block:6px}
+.tool{border:0;background:none;display:grid;justify-items:center;gap:3px;font-size:10px;font-weight:500;color:var(--ink);padding:4px 10px;border-radius:10px;cursor:pointer;min-width:56px}
+.tool:disabled{opacity:.3;cursor:default}
+.tool[aria-pressed="true"]{color:var(--accent)}
+.tool:active{background:var(--surface2)}
+
+/* processing + error */
+.proc{position:absolute;inset:0;z-index:6;display:grid;place-items:center;background:var(--bg);padding:24px}
+.proc-card{width:min(340px,100%);display:grid;gap:12px;justify-items:center;text-align:center}
+.proc-img{position:relative;width:100%;aspect-ratio:1/1;border-radius:var(--r);overflow:hidden;background:#2A2A2A;box-shadow:var(--shadow);margin-bottom:8px}
+.proc-img img{width:100%;height:100%;object-fit:cover;display:block;opacity:.88}
+.proc-img .line{position:absolute;left:0;right:0;height:3px;top:20%;background:var(--accent);box-shadow:0 0 22px 8px rgba(20,184,110,.45)}
+@media (prefers-reduced-motion:no-preference){.proc-img .line{animation:scanline 1.8s ease-in-out infinite alternate}@keyframes scanline{from{top:6%}to{top:92%}}}
+.proc-card b{font-size:20px;font-weight:700}
+.proc-card .s{font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
+.errbox{display:grid;gap:10px;justify-items:center;text-align:center;padding:56px 24px;color:var(--muted)}
+.errbox .big{width:56px;height:56px;display:grid;place-items:center;color:var(--warn)}
+.errbox .big.wait{color:var(--accent)}
+.errbox .big .ic{width:44px;height:44px}
+.errbox b{color:var(--ink);font-size:20px;font-weight:700}
+
+/* sheets + toast */
+.scrim{position:absolute;inset:0;background:var(--scrim);z-index:20;opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.on{opacity:1;pointer-events:auto}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:21;background:var(--surface);border-radius:var(--r) var(--r) 0 0;padding:8px max(24px,env(safe-area-inset-right,0px)) 20px max(24px,env(safe-area-inset-left,0px));display:grid;gap:14px;transform:translateY(105%);transition:transform .3s cubic-bezier(.2,.8,.2,1);box-shadow:0 -4px 24px rgba(0,0,0,.18);max-height:85%;overflow:auto}
+.sheet.on{transform:none}
+@media (prefers-reduced-motion:reduce){.sheet,.scrim{transition:none}}
+.grab{width:36px;height:4px;border-radius:2px;background:var(--line);justify-self:center;margin-bottom:6px}
+.sheet h4{margin:0;font-size:16px;font-weight:700;text-align:center;padding-bottom:12px;border-bottom:1px solid var(--hair);margin-inline:-24px}
+.sheet .sub{margin:0;font-size:14px;color:var(--muted);text-align:center}
+.bigopts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bigopt{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:20px 12px;display:grid;justify-items:start;gap:14px;cursor:pointer;font-size:15px;font-weight:600}
+.bigopt:hover{border-color:var(--ink)}
+.bigopt .ic{width:32px;height:32px;stroke-width:1.4}
+.bigopt[aria-disabled="true"]{opacity:.4;pointer-events:none}
+.menu{display:grid}
+.menu button{border:0;background:none;display:flex;gap:16px;align-items:center;padding:16px 0;cursor:pointer;text-align:left;font-size:16px}
+.menu button + button{border-top:1px solid var(--hair)}
+.sheet .cancel{border:1px solid var(--ink);background:var(--surface);border-radius:var(--r-btn);padding:13px;font-size:15px;font-weight:600;cursor:pointer}
+.sheet input[type=text]{font:inherit;font-size:16px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-btn);padding:14px 12px;outline:none}
+.sheet input[type=text]:focus{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.sheet .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sheet .two button{border:1px solid var(--ink);border-radius:var(--r-btn);padding:13px;font-size:15px;font-weight:600;cursor:pointer;background:var(--surface)}
+.sheet .two .go{background:var(--grad);color:#fff;border-color:transparent}
+.sheet .two .go.red{background:var(--warn);color:#fff}
+.note{font-size:14px;color:var(--muted);background:var(--surface2);border-radius:var(--r);padding:14px 16px;margin:0}
+.toast{position:absolute;left:50%;bottom:92px;transform:translate(-50%,20px);z-index:30;background:#222;color:#fff;border-radius:var(--r-btn);padding:12px 16px;font-size:14px;display:flex;gap:16px;align-items:center;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:calc(100% - 48px);box-shadow:var(--shadow)}
+.toast.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast button{border:0;background:none;color:#fff;font-weight:700;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:0;white-space:nowrap}
+
+/* ---- standalone app shell: the artifact viewer used to supply these ---- */
+html{box-sizing:border-box;height:100%;background:var(--bg);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;touch-action:manipulation;-webkit-text-size-adjust:100%}
+img{max-width:100%}
+/* iOS zooms into fields smaller than 16px */
+@supports (-webkit-touch-callout:none){.search input,.rawedit,.medit,.sheet input{font-size:16px!important}}
+.sheet{padding-bottom:max(20px,env(safe-area-inset-bottom,0px))}
+.fld{display:grid;gap:6px;font-size:13px;font-weight:600;color:var(--ink)}
+.fld .hint{font-weight:400;color:var(--muted)}
+.sheet input[type=password]{font:inherit;font-size:16px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-btn);padding:14px 12px;outline:none;width:100%;box-sizing:border-box}
+.sheet input[type=password]:focus{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.dot-s{width:8px;height:8px;border-radius:50%;background:var(--line);display:inline-block;margin-right:6px;vertical-align:1px}
+.dot-s.on{background:var(--ok)}
+.dot-s.off{background:var(--warn)}
+.install{display:flex;align-items:center;gap:12px;border:1px solid var(--hair);border-radius:var(--r);padding:12px 12px 12px 14px;background:var(--surface2)}
+.install img{width:44px;height:44px;border-radius:11px;flex:none}
+.install .tx{flex:1;min-width:0;display:grid;gap:1px}
+.install .tx b{font-size:15px}
+.install .tx span{font-size:13px;color:var(--muted)}
+.install .x{border:0;background:none;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:var(--muted);cursor:pointer;flex:none}
+.steps{margin:0;padding:0;list-style:none;display:grid;gap:12px;counter-reset:s}
+.steps li{display:flex;gap:12px;align-items:center;font-size:15px}
+.steps li::before{counter-increment:s;content:counter(s);width:26px;height:26px;border-radius:50%;background:var(--accent-soft);color:var(--accent-deep);font-weight:700;font-size:13px;display:grid;place-items:center;flex:none}
+.steps .ic{width:20px;height:20px;color:var(--accent-deep);vertical-align:-4px}
+.setrow:has(#defView){flex-wrap:wrap}
+.setrow:has(#defView) .lbl{white-space:nowrap}
+.offline-pill{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:40;background:var(--ink);color:#fff;font-size:12px;font-weight:600;padding:5px 12px;border-radius:999px;display:flex;gap:6px;align-items:center;box-shadow:var(--shadow)}
+.offline-pill .ic{width:14px;height:14px}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- HOME -->
+  <section class="screen" id="s-home" aria-label="首页">
+    <header class="appbar pad"><h1 class="brand">Recordo</h1><button class="iconbtn ring" data-go="me" aria-label="我的" data-ic="user"></button></header>
+    <div class="scroll"><div class="home pad">
+      <button class="searchpill" data-go="docs"><span data-ic="search" class="sm"></span><span><span class="t" style="display:block">搜索文档</span><span class="s">标题或任意内容</span></span><span class="go" data-ic="search"></span></button>
+      <div class="scan">
+        <span class="scan-art" aria-hidden="true">
+          <svg viewBox="0 0 360 200" preserveAspectRatio="xMidYMid slice">
+            <rect width="360" height="200" fill="var(--accent-soft)"/>
+            <g opacity=".5" stroke="var(--line)"><path d="M0 40h360M0 80h360M0 120h360M0 160h360"/></g>
+            <g transform="rotate(-6 132 110)">
+              <rect x="70" y="26" width="124" height="164" rx="8" fill="#fff" stroke="var(--line)"/>
+              <rect x="84" y="42" width="70" height="9" rx="4.5" fill="var(--ink)"/>
+              <rect x="84" y="58" width="44" height="5" rx="2.5" fill="var(--muted)" opacity=".6"/>
+              <g fill="var(--line)">
+                <rect x="84" y="76" width="92" height="5" rx="2.5"/><rect x="84" y="87" width="64" height="5" rx="2.5"/>
+                <rect x="84" y="104" width="38" height="6" rx="3" fill="var(--ink)" opacity=".75"/>
+                <rect x="94" y="118" width="80" height="5" rx="2.5"/><rect x="94" y="130" width="58" height="5" rx="2.5"/>
+                <rect x="94" y="142" width="72" height="5" rx="2.5"/>
+              </g>
+              <rect x="82" y="157" width="96" height="11" rx="3" fill="var(--mark)"/>
+              <rect x="86" y="160" width="70" height="5" rx="2.5" fill="var(--accent)" opacity=".7"/>
+              <g fill="var(--accent)"><circle cx="88" cy="120.5" r="2.2"/><circle cx="88" cy="132.5" r="2.2"/><circle cx="88" cy="144.5" r="2.2"/></g>
+            </g>
+            <g fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round">
+              <path d="M56 38v-14h14M210 24h14v14M56 170v14h14M210 184h14v-14"/>
+            </g>
+            <g transform="translate(250 54)">
+              <rect width="88" height="92" rx="12" fill="#fff" stroke="var(--line)"/>
+              <rect x="10" y="40" width="22" height="12" rx="4" fill="var(--accent)"/>
+              <rect x="50" y="14" width="28" height="10" rx="3.5" fill="var(--surface)" stroke="var(--b2)" stroke-width="1.5"/>
+              <rect x="50" y="41" width="28" height="10" rx="3.5" fill="var(--surface)" stroke="var(--b3)" stroke-width="1.5"/>
+              <rect x="50" y="68" width="28" height="10" rx="3.5" fill="var(--surface)" stroke="var(--b4)" stroke-width="1.5"/>
+              <path d="M32 46c9 0 9-27 18-27M32 46h18M32 46c9 0 9 27 18 27" fill="none" stroke="var(--muted)" stroke-width="1.3"/>
+            </g>
+            <path d="M216 100h22" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/><path d="M233 94l7 6-7 6" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="badge">原文一字不改</span>
+        </span>
+        <div class="scan-body">
+          <div class="scan-txt"><span class="h">扫描一页笔记</span><span class="p">自动理顺排版，生成可编辑的思维导图</span></div>
+          <div class="scan-actions">
+            <label class="pill solid" for="camIn" role="button"><span data-ic="camera"></span>拍照</label>
+            <label class="pill ghost" for="libIn" role="button"><span data-ic="image"></span>上传图片</label>
+          </div>
+        </div>
+      </div>
+      <div class="flow" aria-label="工作方式">
+        <div class="flow-step"><span class="dot" data-ic="camera"></span><b>拍照</b></div><span class="arr" data-ic="chev"></span>
+        <div class="flow-step"><span class="dot" data-ic="align"></span><b>理顺排版</b></div><span class="arr" data-ic="chev"></span>
+        <div class="flow-step"><span class="dot" data-ic="tree"></span><b>生成导图</b></div>
+      </div>
+      <div class="install" id="installCard" hidden>
+        <img src="icons/icon-192.png" alt="">
+        <span class="tx"><b>把 Recordo 装到主屏幕</b><span>像普通 App 一样打开，没网也能看笔记</span></span>
+        <button class="btn primary" id="installGo">安装</button>
+        <button class="x" id="installX" aria-label="不再提示" data-ic="x"></button>
+      </div>
+      <div>
+        <div class="sec-h"><h3>最近</h3><button class="link" data-go="docs">全部</button></div>
+        <div class="cards" id="recent"></div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- DOCS -->
+  <section class="screen" id="s-docs" aria-label="文档" hidden>
+    <header class="appbar pad"><h1>文档</h1></header>
+    <div class="scroll"><div class="pad" style="padding-block:0 28px">
+      <label class="search"><span data-ic="search" class="sm"></span><input type="search" id="q" placeholder="搜索标题或内容" aria-label="搜索文档"></label>
+      <div id="docList"></div>
+    </div></div>
+  </section>
+
+  <!-- STARRED -->
+  <section class="screen" id="s-starred" aria-label="收藏" hidden>
+    <header class="appbar pad"><h1>收藏</h1></header>
+    <div class="scroll"><div class="pad" style="padding-block:0 28px"><div id="starList"></div></div></div>
+  </section>
+
+  <!-- ME -->
+  <section class="screen" id="s-me" aria-label="我的" hidden>
+    <header class="appbar pad"><h1>我的</h1></header>
+    <div class="scroll"><div class="pad" style="padding-block:0 28px">
+      <p class="group-h">打开文档时显示</p>
+      <div class="list"><div class="setrow"><span class="ico-c" data-ic="eye"></span><span class="lbl">默认视图</span>
+        <span class="seg" role="group" aria-label="默认视图" id="defView"><button data-v="raw">原文</button><button data-v="notes">笔记</button><button data-v="map">导图</button><button data-v="sum">总结</button></span></div></div>
+      <p class="group-h">识别规则</p>
+      <div class="list">
+        <div class="setrow"><span class="ico-c ok" data-ic="check"></span><span class="lbl">合并断行、拆开挤在一行的要点<div class="sub">对齐列表层级，识别原文已有的标题</div></span></div>
+        <div class="setrow"><span class="ico-c no" data-ic="x"></span><span class="lbl">不改写、不删减、不调换顺序<div class="sub">每次识别都会逐字核对原文</div></span></div>
+      </div>
+      <p class="group-h">识别服务</p>
+      <div class="list">
+        <div class="setrow"><span class="ico-c" data-ic="spark"></span><span class="lbl"><span id="aiStatus"><span class="dot-s"></span>正在检测…</span><div class="sub" id="aiSub"></div></span></div>
+        <button class="setrow row" id="keyBtn"><span class="ico-c" data-ic="key"></span><span class="lbl">连接设置<div class="sub">访问口令 · 个人 API Key</div></span><span class="chev" data-ic="chev"></span></button>
+      </div>
+      <p class="group-h">App</p>
+      <div class="list">
+        <button class="setrow row" id="installBtn"><span class="ico-c" data-ic="download"></span><span class="lbl">安装到主屏幕<div class="sub" id="installSub"></div></span><span class="chev" data-ic="chev"></span></button>
+        <div class="setrow"><span class="ico-c" data-ic="wifi"></span><span class="lbl">离线使用<div class="sub" id="offlineSub">正在准备离线缓存…</div></span></div>
+      </div>
+      <p class="group-h">存储</p>
+      <div class="list">
+        <div class="setrow"><span class="ico-c" data-ic="docs"></span><span class="lbl" id="storeInfo">0 篇文档</span></div>
+        <button class="setrow row danger" id="clearAll"><span class="ico-c no" data-ic="trash"></span><span class="lbl">清空所有文档</span></button>
+      </div>
+      <p class="group-h">说明</p>
+      <p class="note" id="envNote">文档只保存在这台设备上，不会上传到任何服务器。识别时，照片会发送给 Claude 处理。</p>
+    </div></div>
+  </section>
+
+  <!-- DOCUMENT -->
+  <section class="screen" id="s-doc" aria-label="文档详情" hidden>
+    <div class="dochead pad">
+      <div class="appbar">
+        <button class="iconbtn" id="back" aria-label="返回" data-ic="back"></button>
+        <button class="doc-title" id="docTitle" aria-label="重命名"></button>
+        <button class="iconbtn" id="starBtn" aria-label="收藏" aria-pressed="false" data-ic="star"></button>
+        <button class="iconbtn" id="moreBtn" aria-label="更多" data-ic="more"></button>
+      </div>
+      <div class="doc-sub">
+        <div class="seg" role="tablist" aria-label="视图">
+          <button role="tab" data-view="raw" aria-selected="false">原文</button>
+          <button role="tab" data-view="notes" aria-selected="true">笔记</button>
+          <button role="tab" data-view="map" aria-selected="false">导图</button>
+          <button role="tab" data-view="sum" aria-selected="false">总结</button>
+        </div>
+        <button class="chip ok" id="chip" aria-expanded="false" hidden></button>
+      </div>
+      <div class="checkd" id="checkd" hidden></div>
+    </div>
+    <div class="docbody">
+      <div class="view" id="v-raw" hidden><div class="view-in pad">
+        <figure class="photo" id="rawPhoto" hidden style="margin:0"><img alt="拍摄的原图"></figure>
+        <p class="cap" id="rawCap"><span data-ic="text" class="sm"></span>识别出的原始文字</p>
+        <div class="paper"><pre class="raw" id="raw"></pre><textarea class="rawedit" id="rawText" aria-label="原始识别文字" spellcheck="false" hidden></textarea></div>
+      </div></div>
+      <div class="view" id="v-notes"><div class="view-in pad"><article class="paper notes" id="notes"></article></div></div>
+      <div class="view" id="v-sum" hidden><div class="view-in pad" id="sumBody"></div></div>
+      <div class="view" id="v-map" hidden>
+        <div class="map-wrap" id="mapWrap"><svg id="map" role="img" aria-label="思维导图"></svg></div>
+        <div class="floatbar nodebar" id="nodebar" role="toolbar" aria-label="节点操作" hidden>
+          <button id="mEdit"><span data-ic="pen" class="sm"></span>改字</button>
+          <button id="mChild"><span data-ic="child" class="sm"></span>子节点</button>
+          <button id="mSib"><span data-ic="sib" class="sm"></span>同级</button>
+          <button id="mFold"><span data-ic="fold" class="sm"></span>收起</button>
+          <button id="mDel" class="del"><span data-ic="trash" class="sm"></span>删除</button>
+        </div>
+        <div class="floatbar zoombar" role="group" aria-label="缩放">
+          <button id="zOut" aria-label="缩小" data-ic="minus"></button>
+          <button id="zPct" title="恢复 100%">100%</button>
+          <button id="zIn" aria-label="放大" data-ic="plus"></button>
+          <button id="zFit" aria-label="适合屏幕" data-ic="fit"></button>
+        </div>
+      </div>
+      <div class="errbox" id="errBox" hidden></div>
+      <div class="proc" id="proc" hidden><div class="proc-card">
+        <div class="proc-img"><img id="procImg" alt=""><span class="line"></span></div>
+        <b>正在识别并排版</b><span class="s" id="procTime">0 秒 · 通常 20–60 秒</span>
+        <button class="btn" id="stopBtn"><span data-ic="x" class="sm"></span>停止</button>
+      </div></div>
+    </div>
+    <nav class="docbar pad" id="docbar" aria-label="文档工具"></nav>
+  </section>
+
+  <!-- TAB BAR -->
+  <nav class="tabbar pad" id="tabbar" aria-label="主导航">
+    <button class="tab" data-go="home"><span data-ic="home"></span>首页</button>
+    <button class="tab" data-go="docs"><span data-ic="docs"></span>文档</button>
+    <div class="fabslot"><button class="fab" id="fab" aria-label="扫描新页面"><span data-ic="camera"></span><span class="plus" aria-hidden="true">+</span></button></div>
+    <button class="tab" data-go="starred"><span data-ic="star"></span>收藏</button>
+    <button class="tab" data-go="me"><span data-ic="user"></span>我的</button>
+  </nav>
+
+  <input class="vh" type="file" id="camIn" accept="image/*" capture="environment" tabindex="-1">
+  <input class="vh" type="file" id="libIn" accept="image/*" tabindex="-1">
+
+  <!-- SHEETS -->
+  <div class="scrim" id="scrim"></div>
+  <div class="sheet" id="sh-capture" role="dialog" aria-label="扫描新页面" aria-hidden="true">
+    <div class="grab"></div><h4>扫描新页面</h4>
+    <div class="bigopts">
+      <label class="bigopt" for="camIn" id="optCam"><span data-ic="camera"></span>拍照</label>
+      <label class="bigopt" for="libIn" id="optLib"><span data-ic="image"></span>上传图片</label>
+    </div>
+    <p class="note" id="capNote" hidden>还没有连接识别服务。到「我的 › 识别服务」里设置好就能识别照片，现在可以先看看示例文档。 <button class="link" id="capSetup">去设置</button></p>
+    <button class="cancel" data-close>取消</button>
+  </div>
+  <div class="sheet" id="sh-more" role="dialog" aria-label="更多操作" aria-hidden="true">
+    <div class="grab"></div>
+    <div class="menu">
+      <button id="mRename"><span data-ic="pen"></span>重命名</button>
+      <button id="mCopy"><span data-ic="copy"></span>复制笔记</button>
+      <button id="mExport" hidden><span data-ic="share"></span>导出 Markdown 文件</button>
+      <button id="mRedo" hidden><span data-ic="refresh"></span>重新识别</button>
+      <button id="mRestore"><span data-ic="undo"></span>恢复成识别结果</button>
+      <button id="mDelete" class="danger"><span data-ic="trash"></span>删除文档</button>
+    </div>
+    <button class="cancel" data-close>取消</button>
+  </div>
+  <div class="sheet" id="sh-rename" role="dialog" aria-label="重命名" aria-hidden="true">
+    <div class="grab"></div><h4>重命名</h4>
+    <input type="text" id="renameIn" aria-label="文档名称" maxlength="60">
+    <div class="two"><button data-close>取消</button><button class="go" id="renameOk">保存</button></div>
+  </div>
+  <div class="sheet" id="sh-confirm" role="dialog" aria-label="确认" aria-hidden="true">
+    <div class="grab"></div><h4 id="cfTitle"></h4><p class="sub" id="cfSub"></p>
+    <div class="two"><button data-close>取消</button><button class="go red" id="cfOk">删除</button></div>
+  </div>
+  <div class="sheet" id="sh-key" role="dialog" aria-label="识别服务设置" aria-hidden="true">
+    <div class="grab"></div><h4>识别服务设置</h4>
+    <label class="fld">访问口令 <span class="hint">部署时设置了 APP_PASSCODE 才需要填写</span><input type="password" id="passIn" autocomplete="off" placeholder="没有就留空"></label>
+    <label class="fld">个人 Anthropic API Key <span class="hint">没有部署服务器时使用</span><input type="password" id="keyIn" autocomplete="off" placeholder="sk-ant-…"></label>
+    <p class="note">API Key 只保存在这台设备上，识别时直接发给 Anthropic。只建议在自己的手机上填写。</p>
+    <div class="two"><button data-close>取消</button><button class="go" id="keyOk">保存</button></div>
+  </div>
+  <div class="sheet" id="sh-ios" role="dialog" aria-label="添加到主屏幕" aria-hidden="true">
+    <div class="grab"></div><h4>添加到主屏幕</h4>
+    <ol class="steps">
+      <li><span>在 Safari 里打开这个页面</span></li>
+      <li><span>点底部的分享按钮 <span data-ic="share"></span></span></li>
+      <li><span>选「添加到主屏幕」，再点「添加」</span></li>
+    </ol>
+    <button class="cancel" data-close>知道了</button>
+  </div>
+  <div class="offline-pill" id="offlinePill" hidden><span data-ic="wifi"></span>离线中 · 可以查看和编辑</div>
+  <div class="toast" id="toast" role="status"><span id="toastMsg"></span><button id="toastAct" hidden></button></div>
+</div>
+
+<script>
+(() => {
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+const clone = o => JSON.parse(JSON.stringify(o));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+/* ---------- icons ---------- */
+const P = {
+  home: '<path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z"/>',
+  docs: '<path d="M7 3.5h7l4.5 4.5V19a1.5 1.5 0 0 1-1.5 1.5H7A1.5 1.5 0 0 1 5.5 19V5A1.5 1.5 0 0 1 7 3.5z"/><path d="M14 3.5V8h4.5M8.5 12.5h7M8.5 16h5"/>',
+  camera: '<path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.2l1.5-2.2h5.6L16.3 7h2.2A1.5 1.5 0 0 1 20 8.5v9A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="12.8" r="3.4"/>',
+  image: '<rect x="4" y="4.5" width="16" height="15" rx="2"/><circle cx="9" cy="9.5" r="1.6"/><path d="m4.5 17 4.5-4.5 3.5 3.5 2.5-2.5 4.5 4.5"/>',
+  star: '<path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.3 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/>',
+  user: '<circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20c1-3.6 4-5.5 7.5-5.5s6.5 1.9 7.5 5.5"/>',
+  search: '<circle cx="11" cy="11" r="6"/><path d="m20 20-4.3-4.3"/>',
+  back: '<path d="M15 5l-7 7 7 7"/>',
+  more: '<circle cx="5.5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="18.5" cy="12" r="1.2"/>',
+  chev: '<path d="m9.5 6 6 6-6 6"/>',
+  align: '<path d="M5 6h14M5 10h9M5 14h14M5 18h9"/>',
+  tree: '<rect x="3.5" y="10" width="5" height="4" rx="1"/><rect x="15.5" y="4" width="5" height="4" rx="1"/><rect x="15.5" y="16" width="5" height="4" rx="1"/><path d="M8.5 12h3.5V6h3.5M12 12v6h3.5"/>',
+  text: '<path d="M5 6h14M12 6v13M9 19h6"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  x: '<path d="M6 6l12 12M18 6 6 18"/>',
+  trash: '<path d="M5 7h14M10 4h4M7 7l.8 12a1.5 1.5 0 0 0 1.5 1.4h5.4a1.5 1.5 0 0 0 1.5-1.4L17 7M10 11v6M14 11v6"/>',
+  pen: '<path d="M14.5 5.5l4 4L9 19H5v-4z"/><path d="M12.5 7.5l4 4"/>',
+  copy: '<rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6.5A2.5 2.5 0 0 0 13.5 4h-7A2.5 2.5 0 0 0 4 6.5v7A2.5 2.5 0 0 0 6.5 16H8"/>',
+  undo: '<path d="M9 7 5 11l4 4"/><path d="M5 11h9a5 5 0 0 1 0 10h-2"/>',
+  share: '<path d="M12 4v11M7.5 8.5 12 4l4.5 4.5"/><path d="M6 13v5.5A1.5 1.5 0 0 0 7.5 20h9a1.5 1.5 0 0 0 1.5-1.5V13"/>',
+  refresh: '<path d="M19 12a7 7 0 1 1-2.1-5M19 4.5V9h-4.5"/>',
+  eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>',
+  spark: '<path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9L12 17.5l-1.9-5.1L5 10.5l5.1-1.9z"/><path d="M18.5 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/>',
+  key: '<circle cx="8" cy="15" r="3.6"/><path d="M10.6 12.4 19 4M15.5 7.5l2.5 2.5M17.5 5.5l2 2"/>',
+  download: '<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5"/><path d="M5 19.5h14"/>',
+  wifi: '<path d="M4 9.5a12 12 0 0 1 16 0M7 12.8a7.5 7.5 0 0 1 10 0M10 16a3 3 0 0 1 4 0"/><circle cx="12" cy="19" r=".9"/>',
+  clock: '<circle cx="12" cy="12" r="8"/><path d="M12 8v4.5l3 2"/>',
+  bolt: '<path d="M13 3 5.5 13.5H12L11 21l7.5-10.5H12z"/>',
+  minus: '<path d="M6 12h12"/>', plus: '<path d="M12 6v12M6 12h12"/>',
+  fit: '<path d="M4 9V5.5A1.5 1.5 0 0 1 5.5 4H9M15 4h3.5A1.5 1.5 0 0 1 20 5.5V9M20 15v3.5a1.5 1.5 0 0 1-1.5 1.5H15M9 20H5.5A1.5 1.5 0 0 1 4 18.5V15"/>',
+  child: '<rect x="3.5" y="4" width="8" height="5" rx="1.2"/><rect x="12.5" y="15" width="8" height="5" rx="1.2"/><path d="M7.5 9v8.5h5"/>',
+  sib: '<rect x="4" y="4" width="10" height="5" rx="1.2"/><rect x="4" y="15" width="10" height="5" rx="1.2"/><path d="M18 14.5v6M15 17.5h6"/>',
+  fold: '<path d="M7 9l5 5 5-5"/>', unfold: '<path d="M9 7l5 5-5 5"/>',
+  expand: '<path d="M4 8h16M4 12h16M4 16h16"/>', collapse: '<path d="M4 8h16M4 12h10"/>',
+  indentL: '<path d="M20 6H8M20 12h-8M20 18H8M8 9l-3 3 3 3"/>', indentR: '<path d="M20 6H8M20 12h-6M20 18H8M5 9l3 3-3 3"/>',
+  ins: '<path d="M12 8v8M8 12h8"/><rect x="4" y="4" width="16" height="16" rx="3"/>',
+  source: '<path d="M8 7 3.5 12 8 17M16 7l4.5 5L16 17"/>'
+};
+const icon = (n, cls = "") => `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true">${P[n] || ""}</svg>`;
+function paintIcons(root = document) {
+  root.querySelectorAll("[data-ic]").forEach(el => {
+    if (el.dataset.painted) return; el.dataset.painted = 1;
+    el.insertAdjacentHTML("afterbegin", icon(el.dataset.ic, el.classList.contains("sm") ? "sm" : ""));
+  });
+}
+
+/* ---------- sample document ---------- */
+const SAMPLE_RAW = `第三讲 认知负荷理论(Cognitive
+Load Theory)
+• 提出者:John Sweller,1988年 用于解释
+学习材料设计如何影响
+工作记忆
+三种类型
+1.内在负荷 由学习内容本身的复
+杂度决定  - 元素交互性越高 负荷越大
+2.外在负荷 由不良的教学设计带来 例:图文分离
+  冗余信息
+3.相关负荷 用于构建图式的有效投入
+设计原则  • 减少外在负荷 •管理内在负荷(分段、
+预训练) • 促进相关负荷
+工作记忆容量有限 约4±1个组块`;
+const SAMPLE_BLOCKS = [
+  { type: "h1", depth: 0, text: "第三讲 认知负荷理论(Cognitive Load Theory)" },
+  { type: "li", depth: 0, text: "提出者:John Sweller,1988年 用于解释学习材料设计如何影响工作记忆" },
+  { type: "h2", depth: 0, text: "三种类型" },
+  { type: "li", depth: 0, text: "1.内在负荷 由学习内容本身的复杂度决定" },
+  { type: "li", depth: 1, text: "元素交互性越高 负荷越大" },
+  { type: "li", depth: 0, text: "2.外在负荷 由不良的教学设计带来" },
+  { type: "li", depth: 1, text: "例:图文分离" },
+  { type: "li", depth: 1, text: "冗余信息" },
+  { type: "li", depth: 0, text: "3.相关负荷 用于构建图式的有效投入" },
+  { type: "h2", depth: 0, text: "设计原则" },
+  { type: "li", depth: 0, text: "减少外在负荷" },
+  { type: "li", depth: 0, text: "管理内在负荷(分段、预训练)" },
+  { type: "li", depth: 0, text: "促进相关负荷" },
+  { type: "p", depth: 0, text: "工作记忆容量有限 约4±1个组块" }
+];
+const MAXD = 5;
+function sampleDoc() {
+  const t = Date.now() - 3600e3;
+  return { id: "sample", sample: true, customTitle: true, title: "认知负荷理论（示例）", created: t, updated: t, starred: false,
+    raw: SAMPLE_RAW, original: clone(SAMPLE_BLOCKS), blocks: clone(SAMPLE_BLOCKS), thumb: null };
+}
+let SAMPLE_THUMB = null;
+function drawSamplePhoto() {
+  const c = document.createElement("canvas"); c.width = 800; c.height = 600; const x = c.getContext("2d");
+  const g = x.createLinearGradient(0, 0, 800, 600); g.addColorStop(0, "#3b3f46"); g.addColorStop(1, "#22252b");
+  x.fillStyle = g; x.fillRect(0, 0, 800, 600);
+  x.save(); x.translate(400, 300); x.rotate(-0.035);
+  x.shadowColor = "rgba(0,0,0,.45)"; x.shadowBlur = 24; x.shadowOffsetY = 8;
+  x.fillStyle = "#f7f8fa"; x.fillRect(-340, -240, 680, 480); x.shadowColor = "transparent";
+  x.fillStyle = "#2a3a8f"; x.font = '700 30px "Noto Sans SC", sans-serif'; x.fillText("第三讲  认知负荷理论", -300, -180);
+  x.fillStyle = "#555"; x.font = '400 17px "Noto Sans SC", sans-serif'; x.fillText("Cognitive Load Theory", -300, -150);
+  x.fillStyle = "#222";
+  [[-300,-105,"• 提出者：John Sweller，1988年。用于解释学习材料"],[-284,-80,"设计如何影响工作记忆"],[-300,-40,"三种类型"],
+   [-284,-12,"1. 内在负荷 由学习内容本身的复杂度决定"],[-260,14,"– 元素交互性越高，负荷越大"],
+   [-284,42,"2. 外在负荷 由不良的教学设计带来  例：图文分离、冗余信息"],[-284,70,"3. 相关负荷 用于构建图式的有效投入"]]
+   .forEach(([a, b, t]) => x.fillText(t, a, b));
+  x.fillStyle = "#2a3a8f"; x.fillText("设计原则", -300, 120);
+  x.fillStyle = "#222"; x.fillText("• 减少外在负荷   • 管理内在负荷（分段、预训练）   • 促进相关负荷", -284, 148);
+  x.fillStyle = "#e8eaf2"; x.fillRect(-300, 172, 600, 38);
+  x.fillStyle = "#2a3a8f"; x.font = '500 16px "Noto Sans SC", sans-serif'; x.fillText("工作记忆容量有限：约 4±1 个组块", -284, 197);
+  x.restore();
+  try { SAMPLE_THUMB = c.toDataURL("image/jpeg", 0.8); } catch { SAMPLE_THUMB = null; }
+}
+const thumbOf = d => d.sample ? SAMPLE_THUMB : d.thumb;
+
+/* ---------- library ---------- */
+const KEY = "recordo.lib.v2";
+let lib = { docs: [] }, settings = { defView: "notes" };
+function load() {
+  try { const l = JSON.parse(localStorage.getItem(KEY) || "null"); if (l && Array.isArray(l.docs)) lib = l; } catch {}
+  try { const s = JSON.parse(localStorage.getItem("recordo.settings") || "null"); if (s) settings = Object.assign(settings, s); } catch {}
+  if (!lib.docs.length && !lib.seeded) {
+    try { // bring over the single note from the earlier version, if any
+      const old = JSON.parse(localStorage.getItem("recordo.doc") || "null");
+      if (old && old.label && Array.isArray(old.blocks)) lib.docs.push({ id: uid(), title: old.label, created: Date.now(), updated: Date.now(), starred: false, raw: old.raw, original: old.original || clone(old.blocks), blocks: old.blocks, thumb: null });
+    } catch {}
+    lib.docs.push(sampleDoc()); lib.seeded = true; save();
+  }
+  lib.docs.forEach(d => { if (d.sample && !d.summary) d.summary = { ...clone(SAMPLE_SUMMARY), basis: hashBlocks(SAMPLE_BLOCKS) }; });
+  lib.docs.forEach(d => { if (d.processing) { d.processing = false; if (!d.blocks?.length) d.error = "识别被中断了。"; } });
+}
+const storageOK = (() => { try { localStorage.setItem("recordo.t", "1"); localStorage.removeItem("recordo.t"); return true; } catch { return false; } })();
+let storageWarned = false;
+function save() {
+  if (!storageOK) { if (!storageWarned && lib.docs.some(d => !d.sample)) { storageWarned = true; toast("这个浏览器不允许保存数据，关掉页面后文档会丢失。"); } return false; }
+  const write = () => localStorage.setItem(KEY, JSON.stringify(lib));
+  try { write(); return true; } catch {
+    try { [...lib.docs].sort((a, b) => a.updated - b.updated).forEach(d => { if (d.thumb && d.id !== curId) d.thumb = null; }); write(); toast("本机空间不够，已去掉旧文档的预览图。"); return true; }
+    catch { toast("本机存储空间不足，这次修改没有保存。"); return false; }
+  }
+}
+const saveSettings = () => { try { localStorage.setItem("recordo.settings", JSON.stringify(settings)); } catch {} };
+const getDoc = id => lib.docs.find(d => d.id === id);
+const sorted = () => [...lib.docs].sort((a, b) => b.updated - a.updated);
+function autoTitle(d) {
+  const h = d.blocks.find(b => b.type === "h1") || d.blocks[0];
+  return h ? h.text.slice(0, 40) : "未命名文档";
+}
+function fmtDate(t) {
+  const d = new Date(t), n = new Date(), hm = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  const day = 864e5, start = new Date(n.getFullYear(), n.getMonth(), n.getDate()).getTime();
+  if (t >= start) return "今天 " + hm;
+  if (t >= start - day) return "昨天 " + hm;
+  return `${d.getMonth() + 1}月${d.getDate()}日`;
+}
+
+/* ---------- toast + sheets ---------- */
+let toastT = null;
+function toast(msg, act, fn) {
+  $("toastMsg").textContent = msg; const b = $("toastAct");
+  b.hidden = !act; b.textContent = act || ""; b.onclick = act ? () => { hideToast(); fn(); } : null;
+  $("toast").classList.add("on"); clearTimeout(toastT); toastT = setTimeout(hideToast, act ? 5000 : 2200);
+}
+const hideToast = () => $("toast").classList.remove("on");
+let openSheetEl = null, sheetReturn = null;
+function openSheet(id) {
+  closeSheet(true); const s = $(id); openSheetEl = s; sheetReturn = document.activeElement;
+  $("scrim").classList.add("on"); s.classList.add("on"); s.setAttribute("aria-hidden", "false");
+  setTimeout(() => (s.querySelector("input[type=text]") || s.querySelector("button,label"))?.focus(), 60);
+}
+function closeSheet(silent) {
+  if (!openSheetEl) return; openSheetEl.classList.remove("on"); openSheetEl.setAttribute("aria-hidden", "true"); openSheetEl = null;
+  $("scrim").classList.remove("on"); if (!silent) sheetReturn?.focus?.();
+}
+$("scrim").addEventListener("click", () => closeSheet());
+document.addEventListener("click", e => { if (e.target.closest("[data-close]")) closeSheet(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && openSheetEl) closeSheet(); });
+let confirmFn = null;
+function confirmSheet(title, sub, okLabel, fn) { $("cfTitle").textContent = title; $("cfSub").textContent = sub; $("cfOk").textContent = okLabel; confirmFn = fn; openSheet("sh-confirm"); }
+$("cfOk").addEventListener("click", () => { const f = confirmFn; confirmFn = null; closeSheet(true); f?.(); });
+
+/* ---------- navigation ---------- */
+const TABS = ["home", "docs", "starred", "me"];
+let screen = "home", curId = null;
+function go(name) {
+  if (screen === "doc") leaveDoc();
+  screen = name;
+  ["home", "docs", "starred", "me", "doc"].forEach(s => $("s-" + s).hidden = s !== name);
+  $("tabbar").hidden = name === "doc";
+  document.querySelectorAll(".tab").forEach(t => t.dataset.go === name ? t.setAttribute("aria-current", "page") : t.removeAttribute("aria-current"));
+  if (name === "home") renderHome(); if (name === "docs") renderDocs(); if (name === "starred") renderStarred(); if (name === "me") renderMe();
+  if (name !== "doc") { try { localStorage.setItem("recordo.screen", name); } catch {} }
+}
+document.addEventListener("click", e => { const g = e.target.closest("[data-go]"); if (g) go(g.dataset.go); });
+
+function cardHTML(d) {
+  const th = thumbOf(d);
+  return `<button class="card" data-open="${d.id}"><div class="thumb">${th ? `<img src="${th}" alt="">` : icon("docs")}${d.starred ? `<span class="heart">${icon("star")}</span>` : ""}</div><div class="meta"><span class="t">${esc(d.title)}</span><span class="d">${d.error ? "识别失败" : fmtDate(d.updated)}</span></div></button>`;
+}
+function rowHTML(d) {
+  const th = thumbOf(d), n = d.blocks?.length || 0;
+  return `<button class="row" data-open="${d.id}"><span class="th">${th ? `<img src="${th}" alt="">` : icon("docs")}</span><span class="body"><span class="t">${esc(d.title)}</span><span class="d">${fmtDate(d.updated)} · ${n} 段${d.sample ? ' <span class="tagx">示例</span>' : ""}${d.error ? ' <span class="tagx warn">识别失败</span>' : ""}${d.starred ? ` <span class="star-on">${icon("star", "sm")}</span>` : ""}</span></span><span class="chev">${icon("chev", "sm")}</span></button>`;
+}
+const emptyHTML = (ic, title, sub) => `<div class="empty"><span class="big">${icon(ic)}</span><b>${title}</b><span>${sub}</span></div>`;
+function renderHome() {
+  const r = sorted().slice(0, 6);
+  $("recent").innerHTML = r.length ? r.map(cardHTML).join("") : `<div class="empty" style="grid-column:1/-1;padding:24px">${"还没有文档，点上面的拍照开始。"}</div>`;
+}
+function renderDocs() {
+  const q = $("q").value.trim().toLowerCase();
+  const list = sorted().filter(d => !q || d.title.toLowerCase().includes(q) || (d.blocks || []).some(b => b.text.toLowerCase().includes(q)));
+  $("docList").innerHTML = list.length ? `<div class="list">${list.map(rowHTML).join("")}</div>` : (q ? emptyHTML("search", "没有找到", `没有包含「${esc(q)}」的文档`) : emptyHTML("docs", "还没有文档", "点下方的相机按钮扫描第一页"));
+}
+$("q").addEventListener("input", renderDocs);
+function renderStarred() {
+  const list = sorted().filter(d => d.starred);
+  $("starList").innerHTML = list.length ? `<div class="list">${list.map(rowHTML).join("")}</div>` : emptyHTML("star", "还没有收藏", "在文档右上角点爱心即可收藏");
+}
+function renderMe() {
+  const n = lib.docs.length;
+  $("storeInfo").innerHTML = `${n} 篇文档<div class="sub">保存在这台设备的浏览器里</div>`;
+  $("defView").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === settings.defView));
+}
+$("defView").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; settings.defView = b.dataset.v; saveSettings(); renderMe(); });
+$("clearAll").addEventListener("click", () => confirmSheet("清空所有文档？", "这台设备上的所有文档都会被删除，无法撤销。", "清空", () => {
+  lib.docs = []; lib.seeded = true; save(); renderMe(); toast("已清空。");
+}));
+document.addEventListener("click", e => { const o = e.target.closest("[data-open]"); if (o) openDoc(o.dataset.open); });
+
+/* ---------- document screen ---------- */
+let doc = null, view = "notes", history = [];
+let selected = -1, eSel = -1, mapSel = null, rawEditing = false;
+const collapsed = new Set();
+function openDoc(id, v) {
+  const d = getDoc(id); if (!d) return;
+  if (screen !== "doc" || curId !== id) { history = []; collapsed.clear(); mapSel = null; selected = -1; eSel = -1; }
+  curId = id; doc = d;
+  ["home", "docs", "starred", "me"].forEach(s => $("s-" + s).hidden = true);
+  $("s-doc").hidden = false; $("tabbar").hidden = true; screen = "doc";
+  setRawEdit(false, true);
+  renderDocHead(); setView(v || settings.defView || "notes");
+  $("back").focus({ preventScroll: true });
+}
+function leaveDoc() { closeEditor(true); flushTyping(); setRawEdit(false, true); $("checkd").hidden = true; }
+$("back").addEventListener("click", () => go(TABS.includes(lastTab) ? lastTab : "home"));
+let lastTab = "home";
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => lastTab = t.dataset.go));
+
+function renderDocHead() {
+  $("docTitle").textContent = doc.title;
+  $("starBtn").setAttribute("aria-pressed", !!doc.starred);
+  $("starBtn").querySelector("svg").style.fill = doc.starred ? "var(--accent)" : "none";
+  $("starBtn").querySelector("svg").style.stroke = doc.starred ? "var(--accent)" : "currentColor";
+  const failed = !!doc.error && !doc.blocks?.length;
+  $("errBox").hidden = !failed;
+  document.querySelector(".doc-sub").hidden = failed || !!doc.processing;
+  if (failed) {
+    const limited = doc.errCode === "rate_limited", canRetry = hasPhoto(doc.id) && sample;
+    $("errBox").innerHTML = `<span class="big${limited ? " wait" : ""}">${icon(limited ? "clock" : "x")}</span><b>${limited ? "Claude 暂时忙不过来" : "没能识别这张照片"}</b><span style="max-width:30ch">${esc(doc.error)}</span>` +
+      `<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">${canRetry ? `<button class="btn primary" id="retry">${icon("refresh", "sm")}重试</button>` : ""}${canRetry && limited ? `<button class="btn" id="retryQuick">${icon("bolt", "sm")}用快速模式试试</button>` : ""}<button class="btn" id="errDel">${icon("trash", "sm")}删除</button></div>` +
+      (limited && canRetry ? `<span style="font-size:13px">快速模式用更轻量的模型，额度通常更宽裕，但识别准确度可能稍低。</span>` : "") +
+      (!canRetry && !sample ? `<span style="font-size:13px">连接识别服务后才能重试。</span>` : "");
+    ["v-raw", "v-notes", "v-map"].forEach(v => $(v).hidden = true);
+  }
+  $("proc").hidden = !doc.processing;
+  if (doc.processing) $("procImg").src = thumbOf(doc) || "";
+  checkContent();
+}
+$("errBox").addEventListener("click", e => {
+  if (e.target.closest("#retry")) recognize(doc.id);
+  if (e.target.closest("#retryQuick")) recognize(doc.id, { quick: true });
+  if (e.target.closest("#errDel")) deleteDoc(doc.id);
+});
+$("starBtn").addEventListener("click", () => { doc.starred = !doc.starred; save(); renderDocHead(); toast(doc.starred ? "已加入收藏" : "已从收藏中移除"); });
+$("docTitle").addEventListener("click", () => { $("renameIn").value = doc.title; openSheet("sh-rename"); });
+$("renameOk").addEventListener("click", () => { const v = $("renameIn").value.trim(); if (v) { doc.title = v; doc.customTitle = true; doc.updated = Date.now(); save(); renderDocHead(); } closeSheet(); });
+$("renameIn").addEventListener("keydown", e => { if (e.key === "Enter") $("renameOk").click(); });
+$("moreBtn").addEventListener("click", () => {
+  $("mExport").hidden = !downloads; $("mRedo").hidden = !(hasPhoto(doc.id) && sample);
+  $("mRestore").hidden = JSON.stringify(doc.blocks) === JSON.stringify(doc.original);
+  openSheet("sh-more");
+});
+$("mRename").addEventListener("click", () => { closeSheet(true); $("renameIn").value = doc.title; openSheet("sh-rename"); });
+$("mCopy").addEventListener("click", () => { closeSheet(true); copyNotes(); });
+$("mExport").addEventListener("click", () => { closeSheet(true); exportMd(); });
+$("mRedo").addEventListener("click", () => { closeSheet(true); recognize(doc.id); });
+$("mRestore").addEventListener("click", () => { closeSheet(true); restoreOriginal(); });
+$("mDelete").addEventListener("click", () => { closeSheet(true); confirmSheet("删除这篇文档？", `「${doc.title}」会从这台设备上删除。`, "删除", () => deleteDoc(doc.id)); });
+function deleteDoc(id) {
+  const i = lib.docs.findIndex(d => d.id === id); if (i < 0) return;
+  const [d] = lib.docs.splice(i, 1); save(); go(TABS.includes(lastTab) ? lastTab : "home");
+  toast("已删除", "撤销", () => { lib.docs.splice(i, 0, d); save(); go(screen); });
+}
+
+/* views */
+function setView(v) {
+  if (doc.error && !doc.blocks?.length) return;
+  closeEditor(true); flushTyping(); view = v;
+  document.querySelectorAll(".doc-sub [data-view]").forEach(b => b.setAttribute("aria-selected", b.dataset.view === v));
+  ["raw", "notes", "map", "sum"].forEach(n => $("v-" + n).hidden = n !== v || !!doc.processing);
+  if (v === "raw") renderRaw(); if (v === "notes") renderNotes(); if (v === "map") { renderMap(); mapHintOnce(); } if (v === "sum") renderSum();
+  renderDocbar();
+}
+document.querySelector(".doc-sub .seg").addEventListener("click", e => { const b = e.target.closest("[data-view]"); if (b) setView(b.dataset.view); });
+
+function renderDocbar() {
+  const T = (id, ic, label, opts = {}) => `<button class="tool" id="${id}"${opts.disabled ? " disabled" : ""}${opts.pressed != null ? ` aria-pressed="${opts.pressed}"` : ""}>${icon(ic)}${label}</button>`;
+  const undoDis = { disabled: !history.length };
+  let h = "";
+  if (doc.processing || (doc.error && !doc.blocks?.length)) h = "";
+  else if (view === "raw") h = T("tbRawEdit", rawEditing ? "check" : "pen", rawEditing ? "完成" : "改错字", { pressed: rawEditing }) + T("tbRawRevert", "undo", "还原原文", { disabled: !(doc.rawOriginal != null && doc.raw !== doc.rawOriginal) }) + T("tbToNotes", "align", "看笔记");
+  else if (view === "notes") h = T("tbUndo", "undo", "撤销", undoDis) + T("tbCopy", "copy", "复制") + (downloads ? T("tbExport", "share", "导出") : "") + T("tbToMap", "tree", "看导图");
+  else if (view === "sum") h = doc.summary ? T("tbSumRegen", "refresh", "重新生成", { disabled: !sampleText || sumBusyId === doc.id }) + T("tbSumCopy", "copy", "复制") + T("tbToNotes", "align", "看笔记") : T("tbToNotes", "align", "看笔记") + T("tbToMap", "tree", "看导图");
+  else h = T("tbUndo", "undo", "撤销", undoDis) + T("tbExpand", "expand", "全部展开") + T("tbCollapse", "collapse", "只看一级") + T("tbCopy", "copy", "复制");
+  $("docbar").innerHTML = h; $("docbar").hidden = !h;
+}
+$("docbar").addEventListener("mousedown", e => { if (e.target.closest(".tool")) e.preventDefault(); });
+$("docbar").addEventListener("click", e => {
+  const b = e.target.closest(".tool"); if (!b) return;
+  switch (b.id) {
+    case "tbUndo": flushTyping(); closeEditor(false); undo(); break;
+    case "tbCopy": copyNotes(b); break;
+    case "tbExport": exportMd(); break;
+    case "tbToMap": setView("map"); break;
+    case "tbToNotes": setView("notes"); break;
+    case "tbExpand": collapsed.clear(); renderMap(); break;
+    case "tbCollapse": collapsed.clear(); toTree().children.forEach(n => { if (n.children.length) collapsed.add(n.bi); }); renderMap(); break;
+    case "tbRawEdit": setRawEdit(!rawEditing); break;
+    case "tbRawRevert": revertRaw(); break;
+    case "tbSumRegen": summarize(); break;
+    case "tbSumCopy": copySummary(); break;
+  }
+});
+
+/* ---------- summary (段落总结) ---------- */
+const hashBlocks = B => { let h = 0; const t = JSON.stringify((B || []).map(b => [b.type, b.depth | 0, b.text])); for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return String(h); };
+const SAMPLE_SUMMARY = {
+  overview: "这一讲介绍认知负荷理论。它由 John Sweller 在 1988 年提出，用来解释学习材料的设计如何影响工作记忆。由于工作记忆容量有限，约 4±1 个组块，教学设计需要合理分配这部分资源。",
+  sections: [
+    { title: "三种类型", text: "认知负荷分为三类：内在负荷来自学习内容本身的复杂度，元素交互性越高负荷越大；外在负荷由不良的教学设计带来，例如图文分离和冗余信息；相关负荷则是用于构建图式的有效投入。" },
+    { title: "设计原则", text: "对应的设计原则是减少外在负荷，通过分段和预训练来管理内在负荷，并促进相关负荷。" }
+  ]
+};
+let sumCtl = null, sumBusyId = null;
+const SUM_ART = `<svg viewBox="0 0 176 96" width="176" height="96" aria-hidden="true">
+  <rect x="6" y="8" width="60" height="80" rx="7" fill="#fff" stroke="var(--line)"/>
+  <rect x="15" y="18" width="32" height="6" rx="3" fill="var(--ink)"/>
+  <g fill="var(--line)"><rect x="15" y="32" width="42" height="4" rx="2"/><rect x="15" y="41" width="30" height="4" rx="2"/><rect x="19" y="52" width="38" height="4" rx="2"/><rect x="19" y="61" width="28" height="4" rx="2"/><rect x="19" y="70" width="34" height="4" rx="2"/></g>
+  <path d="M76 48h18" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/><path d="M89 42.5l6 5.5-6 5.5" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="106" y="14" width="64" height="68" rx="9" fill="var(--accent-soft)"/>
+  <g fill="var(--accent)" opacity=".85"><rect x="115" y="24" width="46" height="5" rx="2.5"/><rect x="115" y="34" width="40" height="5" rx="2.5"/><rect x="115" y="44" width="44" height="5" rx="2.5"/></g>
+  <g fill="var(--accent)" opacity=".45"><rect x="115" y="58" width="46" height="4" rx="2"/><rect x="115" y="67" width="32" height="4" rx="2"/></g>
+</svg>`;
+function makeEditable(root) { root.querySelectorAll("p[data-k]").forEach(p => { try { p.contentEditable = "plaintext-only"; } catch {} if (p.contentEditable !== "plaintext-only") p.contentEditable = "true"; p.spellcheck = false; }); }
+function renderSum() {
+  const el = $("sumBody"), S = doc.summary;
+  if (sumBusyId === doc.id) {
+    el.innerHTML = `<div class="sum-card"><span class="sum-tag">${icon("spark", "sm")}正在写总结<span id="sumTime"></span></span>
+      <div class="skel big"><i></i><i></i><i style="width:72%"></i></div>
+      <div class="skel"><i style="width:30%"></i><i></i><i style="width:88%"></i></div>
+      <div class="skel"><i style="width:26%"></i><i style="width:94%"></i></div>
+      <button class="btn" id="sumStop" style="justify-self:start">${icon("x", "sm")}停止</button></div>`;
+    return;
+  }
+  if (!S) {
+    el.innerHTML = `<div class="sum-empty">${SUM_ART}<b>把这页笔记写成几段话</b><span>先用一段话概括全文，再按小标题各写一段。只根据笔记内容，不补充外部信息。</span>` +
+      (sampleText ? `<button class="btn primary" id="sumGen">${icon("spark", "sm")}生成总结</button>` : `<p class="note">连接识别服务后才能生成总结。<button class="link" data-go="me">去设置</button></p>`) + `</div>`;
+    return;
+  }
+  const stale = S.basis !== hashBlocks(doc.blocks);
+  el.innerHTML = (stale ? `<div class="sum-stale">${icon("refresh", "sm")}<span>生成总结之后，笔记又改过了。</span>${sampleText ? `<button class="link" id="sumGen">重新生成</button>` : ""}</div>` : "") +
+    `<article class="sum-card"><span class="sum-tag">${icon("spark", "sm")}AI 总结 · 根据笔记生成${S.quick ? " · 快速模式" : ""}</span>
+      <p class="sum-lead" data-k="overview" aria-label="全文概括">${esc(S.overview)}</p>
+      ${S.sections.map((x, i) => `<section class="sum-sec"><h3>${esc(x.title)}</h3><p data-k="${i}" aria-label="${esc(x.title)}">${esc(x.text)}</p></section>`).join("")}
+      <p class="sum-foot">点任意一段就能修改。笔记和原文不受影响。</p></article>`;
+  makeEditable(el);
+}
+$("sumBody").addEventListener("input", e => {
+  const p = e.target.closest("p[data-k]"); if (!p || !doc.summary) return;
+  const k = p.dataset.k, t = p.textContent.replace(/\n+/g, " ");
+  if (k === "overview") doc.summary.overview = t; else if (doc.summary.sections[+k]) doc.summary.sections[+k].text = t;
+  doc.summary.edited = true; save();
+});
+$("sumBody").addEventListener("click", e => {
+  if (e.target.closest("#sumGen")) summarize();
+  if (e.target.closest("#sumStop")) sumCtl?.abort();
+});
+function copySummary() {
+  const S = doc.summary; if (!S) return;
+  const md = `# ${doc.title} · 总结\n\n${S.overview}\n\n` + S.sections.map(x => `## ${x.title}\n\n${x.text}`).join("\n\n") + "\n";
+  const done = () => toast("总结已复制");
+  try { navigator.clipboard.writeText(md).then(done, () => fallbackCopy(md, done)); } catch { fallbackCopy(md, done); }
+}
+const SUM_PROMPT = md => `你是一个笔记总结助手。下面是用户的一页笔记（Markdown 格式）。请用和笔记相同的语言，写一份「段落总结」。
+
+要求：
+- overview：用一段话（2–4 句）概括整页笔记讲了什么、核心结论是什么。
+- sections：按笔记里的小标题（以 ## 开头的行）逐个总结，每个小标题写一段话（1–3 句），title 用原小标题文字。如果笔记没有小标题，就按内容自然分成 2–4 部分，title 用不超过 8 个字的短语概括这一部分。
+- 只根据笔记内容写，不要添加笔记里没有的事实、例子、数字或评价。
+- 用连贯的完整句子，不要用列表或项目符号。
+
+只返回 JSON：{"overview":"...","sections":[{"title":"...","text":"..."}]}
+
+笔记：
+<<<
+${md}
+>>>`;
+async function summarize(opts = {}) {
+  if (!sampleText || sumBusyId || !doc?.blocks?.length) return;
+  if (doc.summary?.edited && !opts.confirmed) { confirmSheet("重新生成总结？", "你改过的总结内容会被新的总结替换。", "重新生成", () => summarize({ ...opts, confirmed: true })); return; }
+  const d = doc; sumBusyId = d.id; sumCtl = new AbortController();
+  if (curId === d.id && view === "sum") { renderSum(); renderDocbar(); }
+  const stop = runTimer(sec => { const t = $("sumTime"); if (t) t.textContent = ` · ${sec} 秒`; });
+  try {
+    const out = await sampleText.json(SUM_PROMPT(toMarkdown(d)), { signal: sumCtl.signal, cache: false, ...(opts.quick ? { modelTier: "quick" } : {}) });
+    if (!out || typeof out.overview !== "string" || !out.overview.trim()) throw { code: "invalid_json" };
+    const sections = (Array.isArray(out.sections) ? out.sections : []).filter(x => x && String(x.text || "").trim())
+      .map(x => ({ title: String(x.title || "").trim() || "要点", text: String(x.text).trim() }));
+    d.summary = { overview: out.overview.trim(), sections, basis: hashBlocks(d.blocks), quick: !!opts.quick, created: Date.now() };
+    save(); if (curId === d.id) toast("总结已生成");
+  } catch (e) {
+    if (e?.code === "rate_limited") toast("Claude 暂时到了用量上限，可以改用快速模式", "快速模式", () => summarize({ quick: true, confirmed: true }));
+    else if (e?.code !== "cancelled") toast(ERR[e?.code] || "总结没有生成成功，请再试一次。");
+    if (e?.code === "not_granted" || e?.code === "sampling_disabled") { sample = sampleText = null; imagesOK = false; }
+  } finally {
+    stop(); sumBusyId = null;
+    if (curId === d.id && screen === "doc" && view === "sum") { renderSum(); renderDocbar(); }
+  }
+}
+
+/* ---------- edits, undo ---------- */
+function snapshot() { history.push(clone(doc.blocks)); if (history.length > 80) history.shift(); }
+function undo() {
+  if (!history.length) return;
+  doc.blocks = history.pop(); collapsed.clear(); mapSel = null; eSel = -1;
+  changed(); toast("已撤销");
+}
+function changed() {
+  doc.updated = Date.now(); if (!doc.customTitle) doc.title = autoTitle(doc);
+  save(); $("docTitle").textContent = doc.title; checkContent();
+  if (view === "notes") renderNotes(); if (view === "map") renderMap(); if (view === "raw") renderRaw();
+  renderDocbar();
+}
+function restoreOriginal() { snapshot(); doc.blocks = clone(doc.original); collapsed.clear(); mapSel = null; eSel = -1; changed(); toast("已恢复成识别结果", "撤销", undo); }
+function insertBlock(at, b) {
+  doc.blocks.splice(at, 0, b);
+  const next = [...collapsed].map(i => i >= at ? i + 1 : i); collapsed.clear(); next.forEach(i => collapsed.add(i));
+}
+function removeBlocks(from, to) {
+  doc.blocks.splice(from, to - from);
+  const n = to - from, next = [...collapsed].filter(i => i < from || i >= to).map(i => i >= to ? i - n : i);
+  collapsed.clear(); next.forEach(i => collapsed.add(i));
+}
+const firstH1 = () => doc.blocks.findIndex(b => b.type === "h1");
+function subtreeEnd(i) {
+  const B = doc.blocks, b = B[i];
+  if (b.type === "h1" && i === firstH1()) return B.length;
+  if (b.type === "h1" || b.type === "h2") { let j = i + 1; while (j < B.length && B[j].type !== "h1" && B[j].type !== "h2") j++; return j; }
+  if (b.type === "li") { let j = i + 1; while (j < B.length && B[j].type === "li" && B[j].depth > b.depth) j++; return j; }
+  return i + 1;
+}
+
+/* ---------- content check ---------- */
+const MARK_CHARS = "\\s•·▪●◦○■□▸►\\-–—*";
+const norm = s => String(s).replace(new RegExp(`[${MARK_CHARS}]`, "g"), "");
+let checkState = null;
+function checkContent() {
+  const chip = $("chip");
+  if (!doc || doc.processing || !doc.blocks?.length) { chip.hidden = true; $("checkd").hidden = true; return; }
+  const a = norm(doc.raw), b = norm(doc.original.map(x => x.text).join(""));
+  const edited = JSON.stringify(doc.blocks) !== JSON.stringify(doc.original);
+  const rawChanged = doc.rawOriginal != null && doc.raw !== doc.rawOriginal;
+  chip.hidden = false;
+  let detail;
+  if (rawChanged) {
+    chip.className = "chip bad"; chip.innerHTML = icon("refresh") + "原文已修改";
+    detail = `<p>你改过原文里的字，笔记还是按改之前排的版。</p><div class="acts">${sampleText ? `<button class="btn primary" id="relayoutBtn">${icon("align", "sm")}按新原文重新排版</button>` : ""}<button class="btn" id="cdRevert">还原原文</button></div>`;
+  } else if (a === b) {
+    chip.className = "chip ok"; chip.innerHTML = icon("check") + (edited ? "已核对 · 有修改" : "与原文一致");
+    detail = `<p>识别结果和原文逐字一致（共 ${a.length} 字），只调整了换行和层级。${edited ? "之后你手动改过笔记。" : ""}</p>${edited ? `<div class="acts"><button class="btn" id="cdRestore">${icon("undo", "sm")}恢复成识别结果</button></div>` : ""}`;
+  } else {
+    let i = 0; while (i < a.length && i < b.length && a[i] === b[i]) i++;
+    chip.className = "chip bad"; chip.innerHTML = "!&nbsp;与原文有出入";
+    detail = `<p>从第 ${i + 1} 个字开始不一致：原文是 <code>${esc(a.slice(i, i + 12) || "（结束）")}</code>，笔记里是 <code>${esc(b.slice(i, i + 12) || "（结束）")}</code>。</p><div class="acts">${hasPhoto(doc.id) && sample ? `<button class="btn primary" id="cdRedo">${icon("refresh", "sm")}重新识别</button>` : ""}${sampleText ? `<button class="btn" id="relayoutBtn">按原文重新排版</button>` : ""}</div>`;
+  }
+  $("checkd").innerHTML = detail;
+  chip.setAttribute("aria-expanded", !$("checkd").hidden);
+}
+$("chip").addEventListener("click", () => { const d = $("checkd"); d.hidden = !d.hidden; $("chip").setAttribute("aria-expanded", !d.hidden); });
+$("checkd").addEventListener("click", e => {
+  if (e.target.closest("#relayoutBtn")) relayout();
+  if (e.target.closest("#cdRestore")) { restoreOriginal(); $("checkd").hidden = true; }
+  if (e.target.closest("#cdRevert")) revertRaw();
+  if (e.target.closest("#cdRedo")) recognize(doc.id);
+});
+
+/* ---------- raw view ---------- */
+function findInRaw(text) {
+  const chars = [...norm(text)]; if (!chars.length) return null;
+  const re = new RegExp(chars.map(c => c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join(`[${MARK_CHARS}]*`));
+  const m = re.exec(doc.raw); return m ? [m.index, m.index + m[0].length] : null;
+}
+function renderRaw() {
+  const th = thumbOf(doc); $("rawPhoto").hidden = !th; if (th) $("rawPhoto").querySelector("img").src = th;
+  const raw = doc.raw || "", b = doc.blocks[selected], hit = b ? findInRaw(b.text) : null;
+  $("raw").innerHTML = hit ? esc(raw.slice(0, hit[0])) + "<mark>" + esc(raw.slice(hit[0], hit[1])) + "</mark>" + esc(raw.slice(hit[1])) : (esc(raw) || `<span style="color:var(--muted)">没有识别文字。</span>`);
+  if (hit) setTimeout(() => $("raw").querySelector("mark")?.scrollIntoView({ block: "center", behavior: "smooth" }), 30);
+}
+function setRawEdit(on, quiet) {
+  rawEditing = on; const ta = $("rawText");
+  $("raw").hidden = on; ta.hidden = !on;
+  $("rawCap").lastChild.textContent = on ? "直接修改识别错的字" : "识别出的原始文字";
+  if (on) { ta.value = doc.raw; ta.style.height = "auto"; ta.style.height = Math.max(300, ta.scrollHeight + 4) + "px"; ta.focus(); }
+  else if (!quiet) renderRaw();
+  if (!quiet) renderDocbar();
+}
+$("rawText").addEventListener("input", e => {
+  if (doc.rawOriginal == null) doc.rawOriginal = doc.raw;
+  doc.raw = e.target.value; doc.updated = Date.now(); save(); checkContent();
+  e.target.style.height = "auto"; e.target.style.height = Math.max(300, e.target.scrollHeight + 4) + "px";
+});
+function revertRaw() {
+  if (doc.rawOriginal == null) return;
+  doc.raw = doc.rawOriginal; $("rawText").value = doc.raw; save(); checkContent(); if (view === "raw") { renderRaw(); renderDocbar(); }
+  toast("已还原成识别时的原文");
+}
+
+/* ---------- notes (always editable) ---------- */
+const BUL = { h1: "", h2: "", p: "", li: "•" };
+function renderNotes(focusI, caret) {
+  const el = $("notes");
+  el.innerHTML = doc.blocks.map((b, i) =>
+    `<div class="erow t-${b.type}${i === eSel ? " sel" : ""}" data-i="${i}" style="padding-left:${6 + (b.type === "li" ? (b.depth | 0) * 22 : 0)}px"><span class="bul" aria-hidden="true">${BUL[b.type]}</span><div class="etext" data-i="${i}" role="textbox" aria-label="第 ${i + 1} 段" spellcheck="false">${esc(b.text)}</div></div>`
+  ).join("") || `<div class="empty"><b>笔记是空的</b><button class="btn primary" id="firstBlock">${icon("plus", "sm")}添加一段</button></div>`;
+  el.querySelectorAll(".etext").forEach(t => { try { t.contentEditable = "plaintext-only"; } catch {} if (t.contentEditable !== "plaintext-only") t.contentEditable = "true"; });
+  if (eSel >= 0 && eSel < doc.blocks.length) placeBar(eSel); else eSel = -1;
+  if (focusI != null) { const t = el.querySelector(`.etext[data-i="${focusI}"]`); if (t) placeCaret(t, caret ?? t.textContent.length); }
+}
+function barHTML(b) {
+  const T = [["h1", "H1", "大标题"], ["h2", "H2", "小标题"], ["p", "¶", "段落"], ["li", "•", "列表"]];
+  return `<div class="ebar" id="ebar" role="toolbar" aria-label="段落格式">${T.map(([t, s, n]) => `<button data-act="type" data-t="${t}" aria-pressed="${b.type === t}" aria-label="${n}" title="${n}">${s}</button>`).join("")}
+    <span class="sep"></span>
+    <button data-act="out" aria-label="减少缩进" title="减少缩进" ${b.type !== "li" || !b.depth ? "disabled" : ""}>${icon("indentL", "sm")}</button>
+    <button data-act="in" aria-label="增加缩进" title="增加缩进" ${b.type !== "li" || b.depth >= MAXD ? "disabled" : ""}>${icon("indentR", "sm")}</button>
+    <span class="sep"></span>
+    <button data-act="add" aria-label="下方插入一段" title="下方插入">${icon("ins", "sm")}</button>
+    <button data-act="src" aria-label="在原文中查看" title="在原文中查看">${icon("source", "sm")}</button>
+    <button data-act="del" class="del" aria-label="删除这一段" title="删除">${icon("trash", "sm")}</button></div>`;
+}
+function placeBar(i) {
+  $("ebar")?.remove();
+  const row = $("notes").querySelector(`.erow[data-i="${i}"]`); if (!row) return;
+  row.insertAdjacentHTML("afterend", barHTML(doc.blocks[i]));
+  $("notes").querySelectorAll(".erow.sel").forEach(r => r.classList.remove("sel")); row.classList.add("sel");
+}
+function caretOffset(el) {
+  const s = getSelection(); if (!s.rangeCount || !el.contains(s.anchorNode)) return el.textContent.length;
+  const r = s.getRangeAt(0), p = r.cloneRange(); p.selectNodeContents(el); p.setEnd(r.endContainer, r.endOffset); return p.toString().length;
+}
+function placeCaret(el, off) {
+  el.focus(); const s = getSelection(), r = document.createRange(), t = el.firstChild;
+  if (t && t.nodeType === 3) r.setStart(t, Math.min(off, t.length)); else { r.selectNodeContents(el); r.collapse(off <= 0); }
+  r.collapse(true); s.removeAllRanges(); s.addRange(r);
+}
+let typingSnap = null;
+const notesEl = $("notes");
+notesEl.addEventListener("focusin", e => {
+  const t = e.target.closest(".etext"); if (!t) return;
+  const i = +t.dataset.i; typingSnap = clone(doc.blocks);
+  if (eSel !== i) { eSel = i; placeBar(i); }
+});
+notesEl.addEventListener("focusout", e => { if (e.target.closest(".etext")) flushTyping(); });
+notesEl.addEventListener("input", e => {
+  const t = e.target.closest(".etext"); if (!t) return;
+  doc.blocks[+t.dataset.i].text = t.textContent.replace(/\n/g, " ");
+  doc.updated = Date.now(); if (!doc.customTitle) { doc.title = autoTitle(doc); $("docTitle").textContent = doc.title; }
+  save(); checkContent();
+});
+notesEl.addEventListener("paste", e => {
+  if (!e.target.closest(".etext")) return;
+  e.preventDefault(); document.execCommand("insertText", false, (e.clipboardData?.getData("text/plain") || "").replace(/\s*\n\s*/g, " "));
+});
+function flushTyping() {
+  if (typingSnap && doc && JSON.stringify(typingSnap) !== JSON.stringify(doc.blocks)) { history.push(typingSnap); if (history.length > 80) history.shift(); renderDocbar(); }
+  typingSnap = null;
+}
+notesEl.addEventListener("keydown", e => {
+  const t = e.target.closest(".etext"); if (!t) return;
+  const i = +t.dataset.i, b = doc.blocks[i];
+  if (e.key === "Enter" && !e.isComposing) {
+    e.preventDefault(); flushTyping(); snapshot();
+    const off = caretOffset(t), txt = b.text; b.text = txt.slice(0, off);
+    insertBlock(i + 1, { type: b.type === "li" ? "li" : "p", depth: b.type === "li" ? b.depth : 0, text: txt.slice(off) });
+    eSel = i + 1; save(); checkContent(); renderNotes(i + 1, 0); renderDocbar();
+  } else if (e.key === "Backspace" && i > 0 && caretOffset(t) === 0 && getSelection().isCollapsed) {
+    e.preventDefault(); flushTyping(); snapshot();
+    const prev = doc.blocks[i - 1], len = prev.text.length; prev.text += b.text; removeBlocks(i, i + 1);
+    eSel = i - 1; save(); checkContent(); renderNotes(i - 1, len); renderDocbar();
+  } else if (e.key === "Tab" && b.type === "li") {
+    e.preventDefault(); const off = caretOffset(t), d = b.depth + (e.shiftKey ? -1 : 1); if (d < 0 || d > MAXD) return;
+    flushTyping(); snapshot(); b.depth = d; save(); renderNotes(i, off); renderDocbar();
+  }
+});
+notesEl.addEventListener("mousedown", e => { if (e.target.closest("#ebar button")) e.preventDefault(); });
+notesEl.addEventListener("click", e => {
+  if (e.target.closest("#firstBlock")) { snapshot(); insertBlock(0, { type: "p", depth: 0, text: "" }); eSel = 0; save(); renderNotes(0, 0); renderDocbar(); return; }
+  const btn = e.target.closest("#ebar button"); if (!btn || eSel < 0) return;
+  const i = eSel, b = doc.blocks[i], act = btn.dataset.act;
+  if (act === "src") { selected = i; flushTyping(); setView("raw"); return; }
+  const tEl = notesEl.querySelector(`.etext[data-i="${i}"]`), off = tEl ? caretOffset(tEl) : b.text.length;
+  flushTyping(); snapshot();
+  if (act === "type") { b.type = btn.dataset.t; if (b.type !== "li") b.depth = 0; renderNotes(i, off); }
+  else if (act === "in" || act === "out") { b.depth = Math.max(0, Math.min(MAXD, b.depth + (act === "in" ? 1 : -1))); renderNotes(i, off); }
+  else if (act === "add") { insertBlock(i + 1, { type: b.type === "li" ? "li" : "p", depth: b.type === "li" ? b.depth : 0, text: "" }); eSel = i + 1; renderNotes(i + 1, 0); }
+  else if (act === "del") { removeBlocks(i, i + 1); eSel = -1; renderNotes(); toast("已删除这一段", "撤销", undo); }
+  doc.updated = Date.now(); if (!doc.customTitle) { doc.title = autoTitle(doc); $("docTitle").textContent = doc.title; }
+  save(); checkContent(); renderDocbar();
+});
+
+/* ---------- copy / export ---------- */
+function toMarkdown(d = doc) {
+  return d.blocks.map(b => b.type === "h1" ? `# ${b.text}\n` : b.type === "h2" ? `\n## ${b.text}\n` : b.type === "li" ? "  ".repeat(b.depth | 0) + "- " + b.text : `\n${b.text}\n`).join("\n").replace(/\n{3,}/g, "\n\n").trim() + "\n";
+}
+function copyNotes() {
+  const md = toMarkdown(), done = () => toast("已复制，可以粘贴到其他笔记工具");
+  try { navigator.clipboard.writeText(md).then(done, () => fallbackCopy(md, done)); } catch { fallbackCopy(md, done); }
+}
+function fallbackCopy(text, done) {
+  const ta = document.createElement("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+  document.body.append(ta); ta.select(); let ok = false; try { ok = document.execCommand("copy"); } catch {}
+  ta.remove(); ok ? done() : toast(downloads ? "没能复制，可以用「导出」保存文件。" : "浏览器不允许自动复制。");
+}
+async function exportMd() {
+  if (!downloads) return;
+  try { await downloads.save({ filename: doc.title.replace(/[\\/:*?"<>|]/g, "").slice(0, 40) + ".md", data: toMarkdown() }); toast("已导出"); }
+  catch (e) { if (e && e.code !== "declined") toast("导出没有成功，请稍后再试。"); }
+}
+
+/* ---------- blocks → tree ---------- */
+function toTree() {
+  const B = doc.blocks, h = firstH1();
+  const root = { text: h >= 0 ? B[h].text : (doc.title || "笔记"), bi: h >= 0 ? h : -1, children: [] };
+  let section = root; const stack = [];
+  B.forEach((b, i) => {
+    if (i === h) return;
+    if (b.type === "h1" || b.type === "h2") { section = { text: b.text, bi: i, children: [] }; root.children.push(section); stack.length = 0; return; }
+    const node = { text: b.text, bi: i, children: [] };
+    if (b.type === "li") {
+      const d = Math.max(0, b.depth | 0);
+      while (stack.length && stack[stack.length - 1].d >= d) stack.pop();
+      (stack.length ? stack[stack.length - 1].node : section).children.push(node); stack.push({ d, node });
+    } else { stack.length = 0; section.children.push(node); }
+  });
+  return root;
+}
+
+/* ---------- mind map ---------- */
+const mctx = document.createElement("canvas").getContext("2d");
+function wrap(text, font, maxW) {
+  mctx.font = font; const lines = []; let line = "";
+  for (const ch of String(text || " ")) {
+    const test = line + ch;
+    if (mctx.measureText(test).width > maxW && line) {
+      const sp = line.lastIndexOf(" ");
+      if (/[A-Za-z0-9]/.test(ch) && sp > 0 && line.length - sp < 12) { lines.push(line.slice(0, sp)); line = line.slice(sp + 1) + ch; }
+      else { lines.push(line); line = ch; }
+    } else line = test;
+  }
+  if (line) lines.push(line); return lines;
+}
+let geo = new Map(), zoom = 1, mapW = 0, mapH = 0;
+const BOX = 160, ROOTBOX = 184, COL = 214, PADX = 12, LH = 19, GAP = 12, M = 24;
+function renderMap() {
+  const root = toTree();
+  const fNode = '400 13px Figtree, "Noto Sans SC", sans-serif', fRoot = '700 15px Figtree, "Noto Sans SC", sans-serif';
+  let cursor = M + 56, maxX = 0; const all = []; geo = new Map();
+  (function lay(n, depth, branch) {
+    n.depth = depth; n.branch = branch; n.w = depth === 0 ? ROOTBOX : BOX;
+    n.lines = wrap(n.text, depth === 0 ? fRoot : fNode, n.w - PADX * 2);
+    n.h = n.lines.length * LH + 14; n.x = M + depth * COL; maxX = Math.max(maxX, n.x + n.w);
+    const kids = n.children; n.hidden = depth > 0 && collapsed.has(n.bi) && kids.length > 0;
+    if (!kids.length || n.hidden) { n.y = cursor + n.h / 2; cursor += n.h + GAP; }
+    else { kids.forEach((c, i) => lay(c, depth + 1, depth === 0 ? i % 5 : branch)); n.y = (kids[0].y + kids[kids.length - 1].y) / 2; }
+    all.push(n); geo.set(n.bi, n);
+  })(root, 0, 0);
+  mapW = maxX + M + 30; mapH = Math.max(cursor - GAP + M + 60, 200);
+  const svg = $("map"); svg.setAttribute("viewBox", `0 0 ${mapW} ${mapH}`); sizeMap();
+  const color = n => `var(--b${(n.branch % 5) + 1})`;
+  let edges = "", nodes = "";
+  all.forEach(n => { if (n.hidden) return; n.children.forEach(c => {
+    const x1 = n.x + n.w, y1 = n.y, x2 = c.x, y2 = c.y, mx = (x1 + x2) / 2;
+    edges += `<path class="edge" style="stroke:${color(c)}" d="M${x1} ${y1} C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}"/>`; }); });
+  all.forEach(n => {
+    const top = n.y - n.h / 2, kids = n.children.length, isRoot = n.depth === 0, tx = n.x + PADX, sel = mapSel === n.bi;
+    const text = n.lines.map((l, i) => `<tspan x="${tx}" y="${top + 7 + LH * (i + 0.75)}">${esc(l)}</tspan>`).join("");
+    let knob = "";
+    if (kids && !isRoot) {
+      const cx = n.x + n.w, cy = n.y;
+      knob = `<circle class="knob" cx="${cx}" cy="${cy}" r="${n.hidden ? 9 : 4}" style="stroke:${color(n)}"/>` + (n.hidden ? `<text class="knob-t" x="${cx}" y="${cy + 3.5}" style="fill:${color(n)}">${kids}</text>` : "") +
+        `<circle class="knob-hit" data-k="${n.bi}" cx="${cx}" cy="${cy}" r="15"><title>${n.hidden ? "展开" : "收起"}</title></circle>`;
+    }
+    const style = isRoot ? "stroke-width:2" : `fill:var(--surface);stroke:${color(n)};stroke-width:${n.depth === 1 ? 1.8 : 1.1}`;
+    nodes += `<g class="node${isRoot ? " root" : ""}${sel ? " sel" : ""}" data-bi="${n.bi}" tabindex="0" role="button" aria-label="${esc(n.text)}"${kids && !isRoot ? ` aria-expanded="${!n.hidden}"` : ""}>` +
+      (sel ? `<rect class="ring" x="${n.x - 4}" y="${top - 4}" width="${n.w + 8}" height="${n.h + 8}" rx="11"/>` : "") +
+      `<rect class="box" x="${n.x}" y="${top}" width="${n.w}" height="${n.h}" rx="${isRoot ? 11 : 8}" style="${style}"/><text class="label">${text}</text>${knob}</g>`;
+  });
+  svg.innerHTML = edges + nodes;
+  updateNodebar();
+}
+function updateNodebar() {
+  const has = mapSel !== null && geo.has(mapSel), n = has ? geo.get(mapSel) : null, isRoot = n?.depth === 0;
+  $("nodebar").hidden = !has;
+  if (!has) return;
+  $("mSib").disabled = $("mDel").disabled = isRoot;
+  const canFold = !isRoot && n.children.length > 0;
+  $("mFold").disabled = !canFold;
+  $("mFold").innerHTML = icon(n.hidden ? "unfold" : "fold", "sm") + (n.hidden ? "展开" : "收起");
+}
+function selectNode(bi, focus) {
+  mapSel = bi; renderMap();
+  if (focus) $("map").querySelector(`g.node[data-bi="${bi}"]`)?.focus({ preventScroll: true });
+  const n = geo.get(bi), w = $("mapWrap"), z = zoom;
+  if (n) { const x = n.x * z, r = (n.x + n.w) * z, top = (n.y - n.h / 2) * z, bot = (n.y + n.h / 2) * z;
+    if (r + 30 > w.scrollLeft + w.clientWidth) w.scrollLeft = r + 30 - w.clientWidth; if (x < w.scrollLeft) w.scrollLeft = Math.max(0, x - 20);
+    if (top - 70 < w.scrollTop) w.scrollTop = top - 70; else if (bot + 70 > w.scrollTop + w.clientHeight) w.scrollTop = bot - w.clientHeight + 70; }
+}
+function mapHintOnce() { try { if (localStorage.getItem("recordo.maphint")) return; localStorage.setItem("recordo.maphint", "1"); } catch {} toast("点节点编辑 · 双指缩放"); }
+
+/* map ops mapped back onto blocks */
+function opAddChild(bi) {
+  const B = doc.blocks; snapshot(); let at, nb;
+  if (bi < 0 || bi === firstH1()) { at = B.length; nb = { type: "h2", depth: 0, text: "新主题" }; }
+  else {
+    const b = B[bi];
+    if (b.type === "h1" || b.type === "h2") { at = subtreeEnd(bi); nb = { type: "li", depth: 0, text: "新节点" }; }
+    else if (b.type === "li") { at = subtreeEnd(bi); nb = { type: "li", depth: Math.min(MAXD, b.depth + 1), text: "新节点" }; }
+    else { b.type = "li"; b.depth = 0; at = bi + 1; nb = { type: "li", depth: 1, text: "新节点" }; }
+  }
+  insertBlock(at, nb); collapsed.delete(bi); afterMapOp(at);
+}
+function opAddSibling(bi) {
+  if (bi < 0 || bi === firstH1()) return opAddChild(bi);
+  const b = doc.blocks[bi]; snapshot();
+  const at = subtreeEnd(bi), head = b.type === "h2" || b.type === "h1";
+  insertBlock(at, { type: b.type === "h1" ? "h2" : b.type, depth: b.depth | 0, text: head ? "新主题" : "新节点" }); afterMapOp(at);
+}
+function opDelete(bi) {
+  if (bi < 0 || bi === firstH1()) return;
+  snapshot(); const end = subtreeEnd(bi), n = end - bi;
+  removeBlocks(bi, end); mapSel = null; changed();
+  toast(n > 1 ? `已删除节点和 ${n - 1} 个子节点` : "已删除节点", "撤销", undo);
+}
+function afterMapOp(bi) { changed(); selectNode(bi); openEditor(bi, true); }
+
+let editor = null;
+function openEditor(bi, isNew) {
+  closeEditor(true);
+  const n = geo.get(bi); if (!n) return;
+  const ta = document.createElement("textarea"); ta.className = "medit"; ta.setAttribute("aria-label", "节点文字");
+  ta.value = bi < 0 ? n.text : doc.blocks[bi].text;
+  const fz = Math.max(14, Math.round(13 * zoom));
+  Object.assign(ta.style, { left: n.x * zoom + "px", top: (n.y - n.h / 2) * zoom + "px", width: Math.max(n.w * zoom, 210) + "px", height: Math.max(n.h * zoom, 42) + "px", fontSize: fz + "px", lineHeight: Math.round(fz * 1.45) + "px" });
+  $("mapWrap").append(ta); editor = { ta, bi, isNew };
+  ta.focus({ preventScroll: true }); ta.select();
+  const grow = () => { ta.style.height = "auto"; ta.style.height = Math.max(42, ta.scrollHeight + 4) + "px"; }; grow();
+  ta.addEventListener("input", grow);
+  ta.addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); closeEditor(true, true); }
+    else if (e.key === "Escape") { e.preventDefault(); closeEditor(false, true); }
+  });
+  ta.addEventListener("blur", () => setTimeout(() => { if (editor && editor.ta === ta) closeEditor(true); }, 0));
+}
+function closeEditor(commit, refocus) {
+  if (!editor) return;
+  const { ta, bi, isNew } = editor; editor = null;
+  const val = ta.value.replace(/\s*\n\s*/g, " ").trim(); ta.remove();
+  if (commit) {
+    if (bi < 0) { if (val) { snapshot(); insertBlock(0, { type: "h1", depth: 0, text: val }); mapSel = 0; changed(); } }
+    else if (!val && isNew) { history.pop(); removeBlocks(bi, bi + 1); mapSel = null; changed(); }
+    else if (val && val !== doc.blocks[bi].text) { if (!isNew) snapshot(); doc.blocks[bi].text = val; changed(); }
+  } else if (isNew) { doc.blocks = history.pop() || doc.blocks; mapSel = null; changed(); }
+  if (refocus && mapSel !== null) $("map").querySelector(`g.node[data-bi="${mapSel}"]`)?.focus({ preventScroll: true });
+}
+
+const mapEl = $("map");
+let lastTap = { bi: null, t: 0 }, suppressClickUntil = 0;
+mapEl.addEventListener("click", e => {
+  if (Date.now() < suppressClickUntil) return;
+  const k = e.target.closest(".knob-hit");
+  if (k) { const bi = +k.dataset.k; collapsed.has(bi) ? collapsed.delete(bi) : collapsed.add(bi); renderMap(); return; }
+  const g = e.target.closest("g.node");
+  if (!g) { if (mapSel !== null) { mapSel = null; renderMap(); } return; }
+  const bi = +g.dataset.bi, now = Date.now();
+  if (lastTap.bi === bi && now - lastTap.t < 400) { lastTap = { bi: null, t: 0 }; openEditor(bi); return; }
+  lastTap = { bi, t: now }; selectNode(bi, true);
+});
+mapEl.addEventListener("keydown", e => {
+  const g = e.target.closest("g.node"); if (!g || editor) return;
+  const bi = +g.dataset.bi;
+  if (e.key === "Tab" && !e.shiftKey) { e.preventDefault(); mapSel = bi; opAddChild(bi); }
+  else if (e.key === "Enter") { e.preventDefault(); mapSel = bi; opAddSibling(bi); }
+  else if (e.key === " " || e.key === "F2") { e.preventDefault(); mapSel = bi; openEditor(bi); }
+  else if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); opDelete(bi); }
+});
+mapEl.addEventListener("focusin", e => {
+  const g = e.target.closest("g.node"); if (!g || mapSel === +g.dataset.bi) return;
+  mapSel = +g.dataset.bi; mapEl.querySelectorAll("g.node.sel").forEach(n => n.classList.remove("sel")); g.classList.add("sel"); updateNodebar();
+});
+["mEdit", "mChild", "mSib", "mFold", "mDel"].forEach(id => $(id).addEventListener("mousedown", e => e.preventDefault()));
+$("mEdit").addEventListener("click", () => mapSel !== null && openEditor(mapSel));
+$("mChild").addEventListener("click", () => mapSel !== null && opAddChild(mapSel));
+$("mSib").addEventListener("click", () => mapSel !== null && opAddSibling(mapSel));
+$("mDel").addEventListener("click", () => mapSel !== null && opDelete(mapSel));
+$("mFold").addEventListener("click", () => { if (mapSel === null) return; collapsed.has(mapSel) ? collapsed.delete(mapSel) : collapsed.add(mapSel); renderMap(); });
+
+/* ---------- zoom: pinch, ctrl/⌘ + wheel, trackpad pinch, buttons ---------- */
+const ZMIN = 0.3, ZMAX = 3;
+try { const z = +localStorage.getItem("recordo.zoom"); if (z >= ZMIN && z <= ZMAX) zoom = z; } catch {}
+function sizeMap() {
+  const svg = $("map"); svg.setAttribute("width", Math.round(mapW * zoom)); svg.setAttribute("height", Math.round(mapH * zoom));
+  $("zPct").textContent = Math.round(zoom * 100) + "%";
+  $("zOut").disabled = zoom <= ZMIN + 1e-3; $("zIn").disabled = zoom >= ZMAX - 1e-3;
+}
+function setZoom(z, px, py, anchor) {
+  const w = $("mapWrap"); z = Math.min(ZMAX, Math.max(ZMIN, z));
+  if (px == null) { px = w.clientWidth / 2; py = w.clientHeight / 2; }
+  const ux = anchor ? anchor.x : (w.scrollLeft + px) / zoom, uy = anchor ? anchor.y : (w.scrollTop + py) / zoom;
+  if (editor) closeEditor(true);
+  zoom = z; sizeMap(); w.scrollLeft = ux * z - px; w.scrollTop = uy * z - py;
+  try { localStorage.setItem("recordo.zoom", String(Math.round(z * 100) / 100)); } catch {}
+}
+const STEPS = [0.3, 0.5, 0.67, 0.8, 1, 1.25, 1.5, 2, 2.5, 3];
+$("zIn").addEventListener("click", () => setZoom(STEPS.find(s => s > zoom + 0.01) ?? ZMAX));
+$("zOut").addEventListener("click", () => setZoom([...STEPS].reverse().find(s => s < zoom - 0.01) ?? ZMIN));
+$("zPct").addEventListener("click", () => setZoom(1));
+$("zFit").addEventListener("click", () => { const w = $("mapWrap"); setZoom(Math.min((w.clientWidth - 8) / mapW, (w.clientHeight - 8) / mapH, 1.5)); w.scrollLeft = 0; w.scrollTop = 0; });
+const wrapEl = $("mapWrap");
+const local = (cx, cy) => { const r = wrapEl.getBoundingClientRect(); return [cx - r.left - wrapEl.clientLeft, cy - r.top - wrapEl.clientTop]; };
+wrapEl.addEventListener("wheel", e => {
+  if (!e.ctrlKey && !e.metaKey) return;
+  e.preventDefault(); const [px, py] = local(e.clientX, e.clientY);
+  setZoom(zoom * Math.exp(-(e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY) * 0.008), px, py);
+}, { passive: false });
+let gStart = null;
+wrapEl.addEventListener("gesturestart", e => { e.preventDefault(); const [px, py] = local(e.clientX, e.clientY); gStart = { z: zoom, px, py, a: { x: (wrapEl.scrollLeft + px) / zoom, y: (wrapEl.scrollTop + py) / zoom } }; });
+wrapEl.addEventListener("gesturechange", e => { e.preventDefault(); if (gStart) setZoom(gStart.z * e.scale, gStart.px, gStart.py, gStart.a); });
+wrapEl.addEventListener("gestureend", e => { e.preventDefault(); gStart = null; });
+let pinch = null;
+const tDist = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+const tMid = t => local((t[0].clientX + t[1].clientX) / 2, (t[0].clientY + t[1].clientY) / 2);
+wrapEl.addEventListener("touchstart", e => {
+  if (e.touches.length !== 2) return; e.preventDefault();
+  const [px, py] = tMid(e.touches);
+  pinch = { d: tDist(e.touches) || 1, z: zoom, a: { x: (wrapEl.scrollLeft + px) / zoom, y: (wrapEl.scrollTop + py) / zoom } };
+}, { passive: false });
+wrapEl.addEventListener("touchmove", e => {
+  if (!pinch || e.touches.length !== 2) return; e.preventDefault();
+  const [px, py] = tMid(e.touches); setZoom(pinch.z * tDist(e.touches) / pinch.d, px, py, pinch.a);
+}, { passive: false });
+const endPinch = e => { if (pinch && e.touches.length < 2) { pinch = null; suppressClickUntil = Date.now() + 350; } };
+wrapEl.addEventListener("touchend", endPinch); wrapEl.addEventListener("touchcancel", endPinch);
+
+document.addEventListener("keydown", e => {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z" && !e.shiftKey && screen === "doc") {
+    const a = document.activeElement; if (a && (a.isContentEditable || a.tagName === "TEXTAREA" || a.tagName === "INPUT")) return;
+    e.preventDefault(); undo();
+  }
+});
+
+/* ---------- capture ---------- */
+let sample = null, sampleText = null, downloads = null, imagesOK = false, ctl = null, busy = false;
+const photos = new Map(); // doc id → File, this session only
+$("fab").addEventListener("click", () => {
+  $("capNote").hidden = imagesOK;
+  $("optCam").setAttribute("aria-disabled", !imagesOK); $("optLib").setAttribute("aria-disabled", !imagesOK);
+  openSheet("sh-capture");
+});
+document.querySelectorAll('label[for="camIn"],label[for="libIn"]').forEach(l => l.addEventListener("click", e => {
+  if (!imagesOK) { e.preventDefault(); closeSheet(true); toast("还没有连接识别服务", "去设置", () => go("me")); }
+}));
+["camIn", "libIn"].forEach(id => $(id).addEventListener("change", e => {
+  const f = e.target.files?.[0]; e.target.value = ""; closeSheet(true);
+  if (f) startScan(f);
+}));
+async function shrink(file, max, q) {
+  try {
+    const url = URL.createObjectURL(file), img = new Image();
+    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
+    const s = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement("canvas"); c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+    return c.toDataURL("image/jpeg", q);
+  } catch { return null; }
+}
+const makeThumb = f => shrink(f, 720, 0.72);
+function dataUrlBlob(u) {
+  try { const [h, b] = u.split(","), bin = atob(b), a = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i); return new Blob([a], { type: h.slice(5, h.indexOf(";")) }); } catch { return null; }
+}
+/* the photo to send: this session's copy, or the one kept with the doc until it is recognised (survives a reload) */
+function photoFor(id) { const d = getDoc(id); return photos.get(id) || (d?.pending ? dataUrlBlob(d.pending) : null); }
+const hasPhoto = id => photos.has(id) || !!getDoc(id)?.pending;
+async function startScan(file) {
+  if (busy) { toast("上一张还在识别，请稍等"); return; }
+  const d = { id: uid(), title: "新扫描 " + fmtDate(Date.now()), created: Date.now(), updated: Date.now(), starred: false, raw: "", original: [], blocks: [], thumb: null, processing: true };
+  lib.docs.push(d);
+  const [thumb, send] = await Promise.all([makeThumb(file), shrink(file, 1600, 0.86)]);
+  d.thumb = thumb; d.pending = send;
+  photos.set(d.id, (send && dataUrlBlob(send)) || file); save();
+  openDoc(d.id); recognize(d.id);
+}
+
+const PROMPT = `你是一个只做排版的工具。图片是用户拍摄的笔记、课件、书页或白板。你绝对不能改变内容。
+
+第一步 raw：像传统 OCR 那样，按版面从上到下、从左到右逐行转写图中所有文字，保留原有换行。
+
+第二步 blocks：把 raw 里的文字按原有顺序切分成排版块。只允许以下操作：
+- 合并被换行切断的句子（中文直接连接，英文单词之间补一个空格）；
+- 把挤在同一行里的多个要点拆成多个列表项；
+- 去掉行首的项目符号（• · - – * 等），用列表层级代替；
+- 判断每块是 h1（一级标题，通常只有一个）、h2（小标题）、li（列表项，带 depth 0–3 表示缩进层级）或 p（普通段落）。
+
+严禁：改写、删减、补充、纠错、调换顺序、翻译、改标点（包括半角改全角）、添加原文没有的标题或总结。
+把所有 blocks 的 text 按顺序连起来，去掉空白和项目符号后，必须和 raw 去掉空白和项目符号后完全相同。
+编号（如 "1."、"(一)"）属于原文内容，保留在 text 里。
+
+如果图片里没有可识别的文字，返回 {"error":"原因"}。
+只返回 JSON，格式：
+{"raw":"...","blocks":[{"type":"h1","text":"..."},{"type":"li","depth":0,"text":"..."},{"type":"p","text":"..."}]}`;
+const RELAYOUT_PROMPT = raw => `你是一个只做排版的工具。下面是一段 OCR 识别出的文字，换行和项目符号是乱的。你绝对不能改变内容。
+
+把文字按原有顺序切分成排版块。只允许：
+- 合并被换行切断的句子（中文直接连接，英文单词之间补一个空格）；
+- 把挤在同一行里的多个要点拆成多个列表项；
+- 去掉行首的项目符号（• · - – * 等），用列表层级代替；
+- 判断每块是 h1（一级标题，通常只有一个）、h2（小标题）、li（列表项，带 depth 0–3）或 p（普通段落）。
+
+严禁：改写、删减、补充、纠错、调换顺序、翻译、改标点、添加原文没有的标题或总结。
+所有 blocks 的 text 按顺序连起来，去掉空白和项目符号后，必须和原文去掉空白和项目符号后完全相同。编号（如 "1."）保留在 text 里。
+
+只返回 JSON：{"blocks":[{"type":"h1","text":"..."},{"type":"li","depth":0,"text":"..."}]}
+
+原文：
+<<<
+${raw}
+>>>`;
+const ERR = {
+  offline: "现在没有网络。照片已经保存，连上网后再点重试。",
+  bad_key: "API Key 不正确，请到「我的 › 识别服务」里重新填写。",
+  bad_passcode: "访问口令不对，请到「我的 › 识别服务」里检查。",
+  not_configured: "服务器还没有配置 ANTHROPIC_API_KEY。",
+  bad_request: "请求被拒绝了，可能是图片太大或格式不支持。",
+  not_granted: "没有获得使用 Claude 的许可，所以无法识别。",
+  sampling_disabled: "这个账号目前不能使用 Claude 识别。",
+  images_unavailable: "当前环境不支持发送图片。",
+  image_rejected: "这张图片无法读取，请换一张 JPG 或 PNG，大小不超过 20MB。",
+  rate_limited: "Claude 的使用次数暂时到了上限。照片已经保存，过几分钟再点重试就行。",
+  session_expired: "登录已过期，请重新登录 Claude 后再试。",
+  refused: "这张图片无法处理，请换一张。",
+  invalid_json: "识别结果格式不完整，请重试。",
+  empty_completion: "没有得到结果，请换一张更清晰的照片。",
+  prompt_too_large: "内容太多了，请拍摄更小的区域。"
+};
+const TYPES = new Set(["h1", "h2", "li", "p"]);
+const cleanBlocks = arr => arr.filter(b => b && TYPES.has(b.type) && String(b.text ?? "").trim())
+  .map(b => ({ type: b.type, depth: b.type === "li" ? Math.max(0, Math.min(MAXD, b.depth | 0)) : 0, text: String(b.text) }));
+function runTimer(fn) { const s = Date.now(), t = setInterval(() => fn(Math.round((Date.now() - s) / 1000)), 1000); fn(0); return () => clearInterval(t); }
+async function recognize(id, opts = {}) {
+  const d = getDoc(id), file = photoFor(id);
+  if (!d || !file || !sample || busy) return;
+  busy = true; ctl = new AbortController(); d.processing = true; d.error = null; d.errCode = null;
+  if (curId === id && screen === "doc") { renderDocHead(); setView(view); }
+  const stop = runTimer(s => $("procTime").textContent = `${s} 秒 · 通常 20–60 秒`);
+  try {
+    const out = await sample.json(PROMPT, { images: [file], signal: ctl.signal, cache: false, ...(opts.quick ? { modelTier: "quick" } : {}) });
+    if (!out || out.error) throw { code: "no_text", message: out?.error };
+    if (typeof out.raw !== "string" || !Array.isArray(out.blocks)) throw { code: "invalid_json" };
+    const blocks = cleanBlocks(out.blocks); if (!blocks.length) throw { code: "no_text" };
+    if (d.blocks.length && JSON.stringify(d.blocks) !== JSON.stringify(d.original) && curId === id) snapshot();
+    Object.assign(d, { raw: out.raw, original: blocks, blocks: clone(blocks), rawOriginal: undefined, updated: Date.now() });
+    if (!d.customTitle) d.title = autoTitle(d);
+    d.processing = false; delete d.pending; save();
+    if (curId === id && screen === "doc") { collapsed.clear(); mapSel = null; eSel = -1; renderDocHead(); setView(view); toast("识别完成"); }
+  } catch (e) {
+    d.processing = false; d.errCode = e?.code || null;
+    if (e?.code === "cancelled") { if (!d.blocks.length) d.error = "你停止了识别。"; }
+    else d.error = e?.code === "no_text" ? "图片里没有找到可识别的文字" + (e.message ? `：${e.message}` : "。") : (ERR[e?.code] || "识别中断了，请检查网络后重试。");
+    if (d.blocks.length && d.error) { toast(d.error); d.error = null; }
+    if (e?.code === "not_granted" || e?.code === "sampling_disabled") { sample = sampleText = null; imagesOK = false; }
+    save(); if (curId === id && screen === "doc") { renderDocHead(); setView(view); }
+  } finally { stop(); busy = false; }
+}
+$("stopBtn").addEventListener("click", () => ctl?.abort());
+async function relayout() {
+  if (!sampleText || busy || !doc.raw.trim()) return;
+  busy = true; ctl = new AbortController(); const d = doc; d.processing = true; $("checkd").hidden = true;
+  $("procImg").src = thumbOf(d) || ""; $("proc").hidden = false; document.querySelector(".proc-card b").textContent = "正在按新原文重新排版";
+  const stop = runTimer(s => $("procTime").textContent = `${s} 秒`);
+  try {
+    const out = await sampleText.json(RELAYOUT_PROMPT(d.raw), { signal: ctl.signal, cache: false });
+    if (!out || !Array.isArray(out.blocks)) throw { code: "invalid_json" };
+    const blocks = cleanBlocks(out.blocks); if (!blocks.length) throw { code: "empty_completion" };
+    if (curId === d.id) snapshot();
+    Object.assign(d, { original: blocks, blocks: clone(blocks), rawOriginal: d.raw });
+    collapsed.clear(); mapSel = null; eSel = -1; toast("已按新原文重新排版", "撤销", undo);
+  } catch (e) {
+    if (e?.code !== "cancelled") toast(ERR[e?.code] || "重新排版中断了，请再试一次。");
+    if (e?.code === "not_granted" || e?.code === "sampling_disabled") { sample = sampleText = null; imagesOK = false; }
+  } finally {
+    stop(); busy = false; d.processing = false; document.querySelector(".proc-card b").textContent = "正在识别并排版";
+    d.updated = Date.now(); if (!d.customTitle) d.title = autoTitle(d); save();
+    if (curId === d.id && screen === "doc") { renderDocHead(); setView(view); }
+  }
+}
+
+/* ---------- boot ---------- */
+paintIcons();
+drawSamplePhoto(); load();
+let start = "home"; try { start = localStorage.getItem("recordo.screen") || "home"; } catch {}
+lastTab = TABS.includes(start) ? start : "home"; go(lastTab);
+document.fonts?.ready?.then(() => { drawSamplePhoto(); if (screen === "doc" && view === "map") renderMap(); else if (screen !== "doc") go(screen); });
+/* ---------- recognition backend ----------
+   Order: inside the Claude app → Claude's own sampling;
+          a personal API key saved on this device → Anthropic API directly;
+          otherwise the /api/claude proxy deployed with this app. */
+const MODELS = { default: "claude-sonnet-5-5", quick: "claude-haiku-5-5" };
+const API_PATH = "api/claude";
+let backend = "none", serverInfo = null;
+const blobToB64 = b => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1]); r.onerror = rej; r.readAsDataURL(b); });
+function parseLoose(t) {
+  try { return JSON.parse(t); } catch {}
+  const f = t.match(/```(?:json)?\s*([\s\S]*?)```/); if (f) { try { return JSON.parse(f[1]); } catch {} }
+  const a = t.search(/[\[{]/), z = Math.max(t.lastIndexOf("}"), t.lastIndexOf("]"));
+  if (a >= 0 && z > a) { try { return JSON.parse(t.slice(a, z + 1)); } catch {} }
+  return undefined;
+}
+async function callClaude(prompt, opts = {}) {
+  if (navigator.onLine === false) throw { code: "offline" };
+  const content = [];
+  for (const img of [].concat(opts.images || [])) {
+    const type = /^image\/(png|webp|gif)$/.test(img.type) ? img.type : "image/jpeg";
+    content.push({ type: "image", source: { type: "base64", media_type: type, data: await blobToB64(img) } });
+  }
+  content.push({ type: "text", text: prompt + "\n\n只输出 JSON，不要输出任何其他文字。" });
+  const body = { model: opts.modelTier === "quick" ? MODELS.quick : MODELS.default, max_tokens: 8000, messages: [{ role: "user", content }] };
+  const direct = backend === "key";
+  let r;
+  try {
+    r = await fetch(direct ? "https://api.anthropic.com/v1/messages" : API_PATH, {
+      method: "POST", signal: opts.signal, body: JSON.stringify(body),
+      headers: direct
+        ? { "content-type": "application/json", "x-api-key": settings.apiKey, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" }
+        : { "content-type": "application/json", ...(settings.passcode ? { "x-app-passcode": settings.passcode } : {}) }
+    });
+  } catch (e) {
+    throw { code: e?.name === "AbortError" ? "cancelled" : navigator.onLine === false ? "offline" : "upstream_error" };
+  }
+  if (!r.ok) {
+    let type = ""; try { type = (await r.json())?.error?.type || ""; } catch {}
+    const code = r.status === 429 || type === "rate_limit_error" ? "rate_limited"
+      : type === "bad_passcode" ? "bad_passcode"
+      : r.status === 401 || r.status === 403 ? (direct ? "bad_key" : "bad_passcode")
+      : type === "server_not_configured" ? "not_configured"
+      : r.status === 413 ? "image_rejected"
+      : r.status === 400 ? "bad_request" : "upstream_error";
+    throw { code };
+  }
+  const j = await r.json();
+  const t = (j.content || []).filter(c => c.type === "text").map(c => c.text).join("");
+  if (!t.trim()) throw { code: "empty_completion" };
+  const v = parseLoose(t);
+  if (v === undefined) throw { code: "invalid_json", text: t };
+  return v;
+}
+const apiClient = { json: callClaude, limits: async () => ({ images: { mediaTypes: ["image/jpeg", "image/png", "image/webp", "image/gif"] } }) };
+
+/* exporting a file: share sheet on phones, a normal download elsewhere */
+const fileSaver = {
+  async save({ filename, data }) {
+    const blob = new Blob([data], { type: "text/markdown;charset=utf-8" });
+    try {
+      const file = new File([blob], filename, { type: "text/markdown" });
+      if (matchMedia("(pointer:coarse)").matches && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: filename }); return { status: "saved" };
+      }
+    } catch (e) { if (e?.name === "AbortError") throw { code: "declined" }; }
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = filename;
+    document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+    return { status: "saved" };
+  }
+};
+
+async function detectBackend() {
+  backend = "none"; sample = sampleText = null; imagesOK = false;
+  if (window.claude?.use) {
+    try {
+      const [s, d] = await Promise.all([window.claude.use("sample"), window.claude.use("downloads")]);
+      if (d) downloads = d;
+      if (s) {
+        sampleText = s; backend = "claude";
+        const lim = await s.limits().catch(() => null);
+        if (lim?.images) { sample = s; imagesOK = true; }
+      }
+    } catch {}
+  }
+  if (backend === "none") {
+    if (settings.apiKey) backend = "key";
+    else {
+      try { const r = await fetch(API_PATH, { cache: "no-store" }); serverInfo = r.ok ? await r.json() : null; if (serverInfo?.ok) backend = "proxy"; } catch { serverInfo = null; }
+    }
+    if (backend !== "none") { sample = sampleText = apiClient; imagesOK = true; }
+  }
+  if (!downloads) downloads = fileSaver;
+  refreshEnv();
+}
+function refreshEnv() {
+  const st = {
+    claude: ["on", "Claude App 内置", "在 Claude 里打开时直接使用你的 Claude 账号"],
+    proxy: ["on", "已连接服务器", serverInfo?.passcode && !settings.passcode ? "服务器设置了访问口令，请在连接设置里填写" : "照片通过部署的服务器发送给 Claude"],
+    key: ["on", "使用个人 API Key", "照片直接发送给 Anthropic，费用记在你的 API 账户"],
+    none: ["off", "未连接", "部署服务器，或在连接设置里填入个人 API Key"]
+  }[backend];
+  $("aiStatus").innerHTML = `<span class="dot-s ${st[0]}"></span>${st[1]}`;
+  $("aiSub").textContent = st[2];
+  $("keyBtn").hidden = backend === "claude";
+  $("capNote").hidden = imagesOK;
+  if (screen === "doc") { renderDocbar(); checkContent(); if (view === "sum") renderSum(); renderDocHead(); }
+}
+$("keyBtn").addEventListener("click", () => { $("keyIn").value = settings.apiKey || ""; $("passIn").value = settings.passcode || ""; openSheet("sh-key"); });
+$("keyOk").addEventListener("click", async () => {
+  settings.apiKey = $("keyIn").value.trim(); settings.passcode = $("passIn").value.trim(); saveSettings();
+  closeSheet(); await detectBackend();
+  toast(backend === "none" ? "还没有可用的识别服务" : "已保存，识别服务：" + $("aiStatus").textContent);
+});
+$("capSetup").addEventListener("click", () => { closeSheet(true); go("me"); });
+
+/* ---------- PWA: install, offline, updates ---------- */
+let installEvt = null;
+const isStandalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+function refreshInstall() {
+  const sub = $("installSub");
+  if (isStandalone()) sub.textContent = "已安装，正在以 App 方式运行";
+  else if (installEvt) sub.textContent = "点这里一键安装";
+  else if (isIOS) sub.textContent = "在 Safari 用「分享 › 添加到主屏幕」";
+  else sub.textContent = "用浏览器菜单里的「安装应用」或「添加到主屏幕」";
+  $("installBtn").disabled = isStandalone();
+  let dismissed = false; try { dismissed = !!localStorage.getItem("recordo.installX"); } catch {}
+  $("installCard").hidden = isStandalone() || dismissed || !(installEvt || isIOS);
+}
+async function doInstall() {
+  if (installEvt) { installEvt.prompt(); const r = await installEvt.userChoice.catch(() => null); installEvt = null; if (r?.outcome === "accepted") toast("正在安装 Recordo"); refreshInstall(); }
+  else if (isIOS) openSheet("sh-ios");
+  else toast("请用浏览器菜单里的「安装应用」");
+}
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; refreshInstall(); });
+window.addEventListener("appinstalled", () => { installEvt = null; refreshInstall(); toast("已安装到主屏幕"); });
+$("installBtn").addEventListener("click", doInstall);
+$("installGo").addEventListener("click", doInstall);
+$("installX").addEventListener("click", () => { try { localStorage.setItem("recordo.installX", "1"); } catch {} refreshInstall(); });
+
+function refreshOnline() {
+  $("offlinePill").hidden = navigator.onLine !== false;
+}
+window.addEventListener("online", () => { refreshOnline(); if (backend === "none") detectBackend(); });
+window.addEventListener("offline", refreshOnline);
+
+const swOK = "serviceWorker" in navigator && !window.claude && (location.protocol === "https:" || ["localhost", "127.0.0.1"].includes(location.hostname));
+if (swOK) {
+  {
+    const hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.register("sw.js").then(reg => {
+      const watch = w => w && w.addEventListener("statechange", () => {
+        if (w.state === "installed" && navigator.serviceWorker.controller) toast("Recordo 有新版本", "更新", () => w.postMessage("skip"));
+      });
+      if (reg.waiting && navigator.serviceWorker.controller) toast("Recordo 有新版本", "更新", () => reg.waiting.postMessage("skip"));
+      reg.addEventListener("updatefound", () => watch(reg.installing));
+      return navigator.serviceWorker.ready;
+    }).then(() => { $("offlineSub").textContent = "已就绪：没网时也能打开、查看和编辑文档"; }).catch(() => { $("offlineSub").textContent = "这个浏览器不支持离线缓存"; });
+    let reloading = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => { if (!hadController || reloading) return; reloading = true; location.reload(); });
+  }
+} else $("offlineSub").textContent = "需要通过 https 打开才能离线使用";
+navigator.storage?.persist?.().catch(() => {});
+
+refreshInstall(); refreshOnline(); detectBackend();
+const action = new URLSearchParams(location.search).get("action");
+if (action === "scan") setTimeout(() => $("fab").click(), 300);
+if (action === "docs") go("docs");
+if (action) window.history.replaceState?.(null, "", location.pathname);
+})();
+</script>
+</body>
+</html>

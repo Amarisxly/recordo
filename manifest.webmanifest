@@ -1,0 +1,23 @@
+{
+  "name": "Recordo",
+  "short_name": "Recordo",
+  "description": "拍照把笔记理顺排版，原文一字不改，生成可编辑的思维导图和段落总结。",
+  "lang": "zh-CN",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FFFFFF",
+  "categories": ["productivity", "education", "utilities"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "扫描新页面", "short_name": "扫描", "url": "./?action=scan", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "我的文档", "short_name": "文档", "url": "./?action=docs", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}
