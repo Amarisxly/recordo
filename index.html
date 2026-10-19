@@ -35,7 +35,8 @@
 }
 [hidden]{display:none!important}
 html,body{height:100%}
-body{overflow-x:hidden;background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:15px;line-height:1.5;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+html{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:15px;line-height:1.5;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
 button{font:inherit;color:inherit}
 .ic{width:24px;height:24px;flex:none;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .ic.sm{width:18px;height:18px;stroke-width:1.8}
@@ -45,7 +46,7 @@ button{font:inherit;color:inherit}
 @media (max-width:360px){.pad{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}}
 
 /* ---- shell ---- */
-#app{height:100%;width:100%;max-width:760px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;overflow:hidden;position:relative;background:var(--bg)}
+#app{height:calc(100% + env(safe-area-inset-bottom,0px));width:100%;max-width:760px;margin:0 auto calc(-1 * env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;overflow:hidden;position:relative;background:var(--bg)}
 @media (min-width:800px){#app{border-inline:1px solid var(--hair)}}
 .screen{display:flex;flex-direction:column;min-height:0;min-width:0;overflow:hidden}
 .scroll{flex:1;overflow-y:auto;overflow-x:hidden;min-width:0;min-height:0;-webkit-overflow-scrolling:touch}
@@ -287,6 +288,7 @@ pre.raw mark{background:var(--mark);color:var(--mark-ink);border-radius:2px}
 .scrim.on{opacity:1;pointer-events:auto}
 .sheet{position:absolute;left:0;right:0;bottom:0;z-index:21;background:var(--surface);border-radius:var(--r) var(--r) 0 0;padding:8px max(24px,env(safe-area-inset-right,0px)) 20px max(24px,env(safe-area-inset-left,0px));display:grid;gap:14px;transform:translateY(105%);transition:transform .3s cubic-bezier(.2,.8,.2,1);box-shadow:0 -4px 24px rgba(0,0,0,.18);max-height:85%;overflow:auto}
 .sheet.on{transform:none}
+.sheet:not(.on){box-shadow:none;visibility:hidden;transition:transform .3s cubic-bezier(.2,.8,.2,1),visibility 0s .3s}
 @media (prefers-reduced-motion:reduce){.sheet,.scrim{transition:none}}
 .grab{width:36px;height:4px;border-radius:2px;background:var(--line);justify-self:center;margin-bottom:6px}
 .sheet h4{margin:0;font-size:16px;font-weight:700;text-align:center;padding-bottom:12px;border-bottom:1px solid var(--hair);margin-inline:-24px}
@@ -312,8 +314,15 @@ pre.raw mark{background:var(--mark);color:var(--mark-ink);border-radius:2px}
 .toast button{border:0;background:none;color:#fff;font-weight:700;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:0;white-space:nowrap}
 
 /* ---- web layout: wide screens get a top nav and 10% side margins ---- */
+/* the bars run under the phone's home indicator instead of leaving a white strip below */
+.tabbar{padding-bottom:calc(4px + env(safe-area-inset-bottom,0px))}
+.docbar{padding-bottom:calc(6px + env(safe-area-inset-bottom,0px))}
+.sheet{padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
+.toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
 .navbrand,.fab-t,.tabbar .langbtn{display:none}
-.langbtn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;height:36px;min-width:52px;padding:0 12px;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.langbtn{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;height:36px;padding:3px;gap:2px;font-size:12px;font-weight:700;letter-spacing:.04em;cursor:pointer;display:inline-flex;align-items:center}
+.langbtn span{height:28px;min-width:34px;padding:0 8px;border-radius:999px;display:grid;place-items:center;transition:background .15s,color .15s}
+.langbtn span.on{background:var(--ink);color:#fff}
 .langbtn:hover{border-color:var(--ink)}
 .seg.pills{gap:6px}
 .seg.pills button{border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:14px}
@@ -383,7 +392,6 @@ body{margin:0;touch-action:manipulation;-webkit-text-size-adjust:100%}
 img{max-width:100%}
 /* iOS zooms into fields smaller than 16px */
 @supports (-webkit-touch-callout:none){.search input,.rawedit,.medit,.sheet input{font-size:16px!important}}
-.sheet{padding-bottom:max(20px,env(safe-area-inset-bottom,0px))}
 .fld{display:grid;gap:6px;font-size:13px;font-weight:600;color:var(--ink)}
 .fld .hint{font-weight:400;color:var(--muted)}
 .sheet input[type=password]{font:inherit;font-size:16px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-btn);padding:14px 12px;outline:none;width:100%;box-sizing:border-box}
@@ -411,7 +419,7 @@ img{max-width:100%}
 <div id="app">
   <!-- HOME -->
   <section class="screen" id="s-home" aria-label="首页">
-    <header class="appbar pad home-bar"><h1 class="brand">Recordo</h1><button class="langbtn no-tr" type="button">EN</button><button class="iconbtn ring" data-go="me" aria-label="我的" data-ic="user"></button></header>
+    <header class="appbar pad home-bar"><h1 class="brand">Recordo</h1><button class="langbtn no-tr" type="button"><span class="on">CN</span><span>EN</span></button><button class="iconbtn ring" data-go="me" aria-label="我的" data-ic="user"></button></header>
     <div class="scroll"><div class="home pad">
       <button class="searchpill" data-go="docs"><span data-ic="search" class="sm"></span><span><span class="t" style="display:block">搜索文档</span><span class="s">标题或任意内容</span></span><span class="go" data-ic="search"></span></button>
       <div class="scan">
@@ -495,7 +503,7 @@ img{max-width:100%}
     <div class="scroll"><div class="pad" style="padding-block:0 28px">
       <p class="group-h">语言</p>
       <div class="list"><div class="setrow"><span class="ico-c" data-ic="globe"></span><span class="lbl">界面语言</span>
-        <span class="seg pills no-tr" role="group" aria-label="Language"><button data-lang="zh">中文</button><button data-lang="en">English</button></span></div></div>
+        <span class="seg pills no-tr" role="group" aria-label="Language"><button data-lang="zh">CN</button><button data-lang="en">EN</button></span></div></div>
       <p class="group-h">打开文档时显示</p>
       <div class="list"><div class="setrow"><span class="ico-c" data-ic="eye"></span><span class="lbl">默认视图</span>
         <span class="seg" role="group" aria-label="默认视图" id="defView"><button data-v="raw">原文</button><button data-v="notes">笔记</button><button data-v="map">导图</button><button data-v="sum">总结</button></span></div></div>
@@ -583,7 +591,7 @@ img{max-width:100%}
     <button class="navbrand" data-go="home" aria-label="Recordo 首页">Recordo</button>
     <button class="tab" data-go="home"><span data-ic="home"></span>首页</button>
     <button class="tab" data-go="docs"><span data-ic="docs"></span>文档</button>
-    <button class="langbtn no-tr" type="button">EN</button>
+    <button class="langbtn no-tr" type="button"><span class="on">CN</span><span>EN</span></button>
     <div class="fabslot"><button class="fab" id="fab" aria-label="扫描新页面"><span data-ic="camera"></span><span class="plus" aria-hidden="true">+</span><span class="fab-t">扫描新页面</span></button></div>
     <button class="tab" data-go="starred"><span data-ic="star"></span>收藏</button>
     <button class="tab" data-go="me"><span data-ic="user"></span>我的</button>
@@ -1838,7 +1846,10 @@ function untranslateAll() {
 }
 function paintLangControls() {
   document.querySelectorAll("[data-lang]").forEach(b => b.setAttribute("aria-pressed", b.dataset.lang === lang));
-  document.querySelectorAll(".langbtn").forEach(b => { b.textContent = lang === "en" ? "中文" : "EN"; b.setAttribute("aria-label", lang === "en" ? "切换到中文" : "Switch to English"); });
+  document.querySelectorAll(".langbtn").forEach(b => {
+    b.innerHTML = `<span class="${lang === "zh" ? "on" : ""}">CN</span><span class="${lang === "en" ? "on" : ""}">EN</span>`;
+    b.setAttribute("aria-label", lang === "en" ? "Language: English. Switch to Chinese" : "语言：中文，切换到英文");
+  });
 }
 function setLang(l, initial) {
   lang = l === "en" ? "en" : "zh";
@@ -1854,7 +1865,7 @@ function setLang(l, initial) {
   if (typeof refreshInstall === "function") try { refreshInstall(); } catch {}
 }
 function initLang() {
-  const pref = settings.lang || ((navigator.language || "").toLowerCase().startsWith("zh") ? "zh" : "en");
+  const pref = settings.lang || "zh";
   trObserver.observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: TR_ATTRS });
   setLang(pref, true);
 }
