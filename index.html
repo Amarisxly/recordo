@@ -311,6 +311,72 @@ pre.raw mark{background:var(--mark);color:var(--mark-ink);border-radius:2px}
 .toast.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
 .toast button{border:0;background:none;color:#fff;font-weight:700;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:0;white-space:nowrap}
 
+/* ---- web layout: wide screens get a top nav and 10% side margins ---- */
+.navbrand,.fab-t,.tabbar .langbtn{display:none}
+.langbtn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;height:36px;min-width:52px;padding:0 12px;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.langbtn:hover{border-color:var(--ink)}
+.seg.pills{gap:6px}
+.seg.pills button{border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:14px}
+.seg.pills button[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+@media (min-width:900px){
+  #app{max-width:none;border:0;grid-template-rows:auto minmax(0,1fr)}
+  @media (min-width:800px){#app{border-inline:0}}
+  .screen{grid-row:2}
+  .pad{padding-left:10%;padding-right:10%}
+  /* top navigation */
+  .tabbar{grid-row:1;display:flex;align-items:center;gap:4px;padding-block:12px;border-top:0;border-bottom:1px solid var(--hair);z-index:10}
+  .navbrand{display:block;order:0;margin-right:20px;border:0;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;font-family:var(--ui);font-size:24px;font-weight:800;letter-spacing:-.02em;cursor:pointer;padding:0}
+  .tab{order:1;display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500;padding:8px 14px;border-radius:999px;letter-spacing:0}
+  .tab .ic{width:20px;height:20px}
+  .tab:hover{background:var(--surface2);color:var(--ink)}
+  .tab[aria-current="page"]{background:var(--accent-soft);color:var(--accent-deep)}
+  .tabbar .langbtn{display:inline-flex;order:2;margin-left:auto;margin-right:8px}
+  .fabslot{order:3}
+  .fab{width:auto;height:44px;margin:0;padding:0 20px 0 16px;border-radius:999px;display:flex;gap:8px;font-size:15px;font-weight:700;box-shadow:0 4px 14px rgba(0,150,110,.3)}
+  .fab .ic{width:20px;height:20px}
+  .fab .plus{display:none}
+  .fab-t{display:inline}
+  /* home */
+  .home-bar{display:none}
+  .home{grid-template-columns:minmax(0,1.7fr) minmax(220px,1fr);gap:24px 28px;padding-block:32px 48px;align-items:stretch}
+  .home > *{grid-column:1/-1}
+  .searchpill{max-width:640px}
+  .home > .scan{grid-column:1}
+  .home > .flow{grid-column:2;grid-template-columns:1fr;grid-template-rows:repeat(3,minmax(0,1fr));gap:12px}
+  .flow-step{grid-template-columns:auto 1fr;align-items:center;align-content:center;gap:16px;padding:16px 20px}
+  .scan{grid-template-columns:minmax(0,1.15fr) minmax(280px,1fr)}
+  .scan-art{background:var(--accent-soft);display:grid;align-items:center}
+  .scan-body{padding:28px;align-content:center;gap:22px}
+  .scan-txt .h{font-size:24px}
+  .scan-actions{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+  .cards{grid-auto-flow:row;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));overflow:visible}
+  /* lists and settings */
+  #s-docs .scroll > .pad,#s-starred .scroll > .pad{padding-top:12px}
+  .list{max-width:none}
+  #s-me .scroll > .pad > *{max-width:760px}
+  .appbar{min-height:72px;padding-block:20px 8px}
+  /* document */
+  .dochead .appbar{min-height:60px}
+  .view-in{padding-block:32px 56px}
+  #v-notes .view-in,#v-sum .view-in{max-width:none}
+  #notes,#sumBody > *{width:100%;max-width:860px;justify-self:center}
+  #sumBody{justify-items:center}
+  #v-raw .view-in{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);align-items:start;column-gap:32px}
+  #v-raw .view-in > .photo{grid-row:1/span 2;position:sticky;top:24px;max-height:none}
+  #v-raw .view-in > .photo img{max-height:70vh}
+  .docbar{justify-content:center;gap:8px;padding-block:8px}
+  .tool{grid-auto-flow:column;align-items:center;gap:8px;font-size:13px;padding:8px 14px;border-radius:999px}
+  .tool .ic{width:20px;height:20px}
+  .tool:hover:not(:disabled){background:var(--surface2)}
+  /* sheets become centred dialogs */
+  .sheet{left:50%;right:auto;bottom:auto;top:50%;width:min(480px,92%);border-radius:16px;transform:translate(-50%,-46%);opacity:0;visibility:hidden;transition:opacity .2s,transform .2s,visibility .2s;padding:20px 28px 24px}
+  .sheet.on{transform:translate(-50%,-50%);opacity:1;visibility:visible}
+  .grab{display:none}
+  .sheet h4{margin-inline:-28px}
+  .toast{bottom:28px}
+}
+@media (min-width:1400px){.home{grid-template-columns:minmax(0,1.8fr) minmax(260px,1fr)}}
+
 /* ---- standalone app shell: the artifact viewer used to supply these ---- */
 html{box-sizing:border-box;height:100%;background:var(--bg);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 body{margin:0;touch-action:manipulation;-webkit-text-size-adjust:100%}
@@ -345,7 +411,7 @@ img{max-width:100%}
 <div id="app">
   <!-- HOME -->
   <section class="screen" id="s-home" aria-label="首页">
-    <header class="appbar pad"><h1 class="brand">Recordo</h1><button class="iconbtn ring" data-go="me" aria-label="我的" data-ic="user"></button></header>
+    <header class="appbar pad home-bar"><h1 class="brand">Recordo</h1><button class="langbtn no-tr" type="button">EN</button><button class="iconbtn ring" data-go="me" aria-label="我的" data-ic="user"></button></header>
     <div class="scroll"><div class="home pad">
       <button class="searchpill" data-go="docs"><span data-ic="search" class="sm"></span><span><span class="t" style="display:block">搜索文档</span><span class="s">标题或任意内容</span></span><span class="go" data-ic="search"></span></button>
       <div class="scan">
@@ -427,6 +493,9 @@ img{max-width:100%}
   <section class="screen" id="s-me" aria-label="我的" hidden>
     <header class="appbar pad"><h1>我的</h1></header>
     <div class="scroll"><div class="pad" style="padding-block:0 28px">
+      <p class="group-h">语言</p>
+      <div class="list"><div class="setrow"><span class="ico-c" data-ic="globe"></span><span class="lbl">界面语言</span>
+        <span class="seg pills no-tr" role="group" aria-label="Language"><button data-lang="zh">中文</button><button data-lang="en">English</button></span></div></div>
       <p class="group-h">打开文档时显示</p>
       <div class="list"><div class="setrow"><span class="ico-c" data-ic="eye"></span><span class="lbl">默认视图</span>
         <span class="seg" role="group" aria-label="默认视图" id="defView"><button data-v="raw">原文</button><button data-v="notes">笔记</button><button data-v="map">导图</button><button data-v="sum">总结</button></span></div></div>
@@ -511,9 +580,11 @@ img{max-width:100%}
 
   <!-- TAB BAR -->
   <nav class="tabbar pad" id="tabbar" aria-label="主导航">
+    <button class="navbrand" data-go="home" aria-label="Recordo 首页">Recordo</button>
     <button class="tab" data-go="home"><span data-ic="home"></span>首页</button>
     <button class="tab" data-go="docs"><span data-ic="docs"></span>文档</button>
-    <div class="fabslot"><button class="fab" id="fab" aria-label="扫描新页面"><span data-ic="camera"></span><span class="plus" aria-hidden="true">+</span></button></div>
+    <button class="langbtn no-tr" type="button">EN</button>
+    <div class="fabslot"><button class="fab" id="fab" aria-label="扫描新页面"><span data-ic="camera"></span><span class="plus" aria-hidden="true">+</span><span class="fab-t">扫描新页面</span></button></div>
     <button class="tab" data-go="starred"><span data-ic="star"></span>收藏</button>
     <button class="tab" data-go="me"><span data-ic="user"></span>我的</button>
   </nav>
@@ -604,6 +675,7 @@ const P = {
   share: '<path d="M12 4v11M7.5 8.5 12 4l4.5 4.5"/><path d="M6 13v5.5A1.5 1.5 0 0 0 7.5 20h9a1.5 1.5 0 0 0 1.5-1.5V13"/>',
   refresh: '<path d="M19 12a7 7 0 1 1-2.1-5M19 4.5V9h-4.5"/>',
   eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>',
+  globe: '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.4 3.5 5.3 3.5 8.5s-1.1 6.1-3.5 8.5c-2.4-2.4-3.5-5.3-3.5-8.5s1.1-6.1 3.5-8.5z"/>',
   spark: '<path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9L12 17.5l-1.9-5.1L5 10.5l5.1-1.9z"/><path d="M18.5 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/>',
   key: '<circle cx="8" cy="15" r="3.6"/><path d="M10.6 12.4 19 4M15.5 7.5l2.5 2.5M17.5 5.5l2 2"/>',
   download: '<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5"/><path d="M5 19.5h14"/>',
@@ -718,16 +790,17 @@ function save() {
 const saveSettings = () => { try { localStorage.setItem("recordo.settings", JSON.stringify(settings)); } catch {} };
 const getDoc = id => lib.docs.find(d => d.id === id);
 const sorted = () => [...lib.docs].sort((a, b) => b.updated - a.updated);
+const titleOf = d => d.sample && lang === "en" && d.title === "认知负荷理论（示例）" ? "Cognitive Load Theory (sample)" : d.title;
 function autoTitle(d) {
   const h = d.blocks.find(b => b.type === "h1") || d.blocks[0];
-  return h ? h.text.slice(0, 40) : "未命名文档";
+  return h ? h.text.slice(0, 40) : L("未命名文档", "Untitled");
 }
 function fmtDate(t) {
   const d = new Date(t), n = new Date(), hm = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
   const day = 864e5, start = new Date(n.getFullYear(), n.getMonth(), n.getDate()).getTime();
-  if (t >= start) return "今天 " + hm;
-  if (t >= start - day) return "昨天 " + hm;
-  return `${d.getMonth() + 1}月${d.getDate()}日`;
+  if (t >= start) return L("今天 ", "Today ") + hm;
+  if (t >= start - day) return L("昨天 ", "Yesterday ") + hm;
+  return lang === "en" ? `${MON[d.getMonth()]} ${d.getDate()}` : `${d.getMonth() + 1}月${d.getDate()}日`;
 }
 
 /* ---------- toast + sheets ---------- */
@@ -771,11 +844,11 @@ document.addEventListener("click", e => { const g = e.target.closest("[data-go]"
 
 function cardHTML(d) {
   const th = thumbOf(d);
-  return `<button class="card" data-open="${d.id}"><div class="thumb">${th ? `<img src="${th}" alt="">` : icon("docs")}${d.starred ? `<span class="heart">${icon("star")}</span>` : ""}</div><div class="meta"><span class="t">${esc(d.title)}</span><span class="d">${d.error ? "识别失败" : fmtDate(d.updated)}</span></div></button>`;
+  return `<button class="card" data-open="${d.id}"><div class="thumb">${th ? `<img src="${th}" alt="">` : icon("docs")}${d.starred ? `<span class="heart">${icon("star")}</span>` : ""}</div><div class="meta"><span class="t">${esc(titleOf(d))}</span><span class="d">${d.error ? "识别失败" : fmtDate(d.updated)}</span></div></button>`;
 }
 function rowHTML(d) {
   const th = thumbOf(d), n = d.blocks?.length || 0;
-  return `<button class="row" data-open="${d.id}"><span class="th">${th ? `<img src="${th}" alt="">` : icon("docs")}</span><span class="body"><span class="t">${esc(d.title)}</span><span class="d">${fmtDate(d.updated)} · ${n} 段${d.sample ? ' <span class="tagx">示例</span>' : ""}${d.error ? ' <span class="tagx warn">识别失败</span>' : ""}${d.starred ? ` <span class="star-on">${icon("star", "sm")}</span>` : ""}</span></span><span class="chev">${icon("chev", "sm")}</span></button>`;
+  return `<button class="row" data-open="${d.id}"><span class="th">${th ? `<img src="${th}" alt="">` : icon("docs")}</span><span class="body"><span class="t">${esc(titleOf(d))}</span><span class="d">${fmtDate(d.updated)} · ${n} 段${d.sample ? ' <span class="tagx">示例</span>' : ""}${d.error ? ' <span class="tagx warn">识别失败</span>' : ""}${d.starred ? ` <span class="star-on">${icon("star", "sm")}</span>` : ""}</span></span><span class="chev">${icon("chev", "sm")}</span></button>`;
 }
 const emptyHTML = (ic, title, sub) => `<div class="empty"><span class="big">${icon(ic)}</span><b>${title}</b><span>${sub}</span></div>`;
 function renderHome() {
@@ -823,7 +896,7 @@ let lastTab = "home";
 document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => lastTab = t.dataset.go));
 
 function renderDocHead() {
-  $("docTitle").textContent = doc.title;
+  $("docTitle").textContent = titleOf(doc);
   $("starBtn").setAttribute("aria-pressed", !!doc.starred);
   $("starBtn").querySelector("svg").style.fill = doc.starred ? "var(--accent)" : "none";
   $("starBtn").querySelector("svg").style.stroke = doc.starred ? "var(--accent)" : "currentColor";
@@ -861,7 +934,7 @@ $("mCopy").addEventListener("click", () => { closeSheet(true); copyNotes(); });
 $("mExport").addEventListener("click", () => { closeSheet(true); exportMd(); });
 $("mRedo").addEventListener("click", () => { closeSheet(true); recognize(doc.id); });
 $("mRestore").addEventListener("click", () => { closeSheet(true); restoreOriginal(); });
-$("mDelete").addEventListener("click", () => { closeSheet(true); confirmSheet("删除这篇文档？", `「${doc.title}」会从这台设备上删除。`, "删除", () => deleteDoc(doc.id)); });
+$("mDelete").addEventListener("click", () => { closeSheet(true); confirmSheet("删除这篇文档？", `「${titleOf(doc)}」会从这台设备上删除。`, "删除", () => deleteDoc(doc.id)); });
 function deleteDoc(id) {
   const i = lib.docs.findIndex(d => d.id === id); if (i < 0) return;
   const [d] = lib.docs.splice(i, 1); save(); go(TABS.includes(lastTab) ? lastTab : "home");
@@ -963,7 +1036,7 @@ $("sumBody").addEventListener("click", e => {
 });
 function copySummary() {
   const S = doc.summary; if (!S) return;
-  const md = `# ${doc.title} · 总结\n\n${S.overview}\n\n` + S.sections.map(x => `## ${x.title}\n\n${x.text}`).join("\n\n") + "\n";
+  const md = `# ${titleOf(doc)} · ${L("总结", "Summary")}\n\n${S.overview}\n\n` + S.sections.map(x => `## ${x.title}\n\n${x.text}`).join("\n\n") + "\n";
   const done = () => toast("总结已复制");
   try { navigator.clipboard.writeText(md).then(done, () => fallbackCopy(md, done)); } catch { fallbackCopy(md, done); }
 }
@@ -1477,7 +1550,7 @@ function photoFor(id) { const d = getDoc(id); return photos.get(id) || (d?.pendi
 const hasPhoto = id => photos.has(id) || !!getDoc(id)?.pending;
 async function startScan(file) {
   if (busy) { toast("上一张还在识别，请稍等"); return; }
-  const d = { id: uid(), title: "新扫描 " + fmtDate(Date.now()), created: Date.now(), updated: Date.now(), starred: false, raw: "", original: [], blocks: [], thumb: null, processing: true };
+  const d = { id: uid(), title: L("新扫描 ", "New scan ") + fmtDate(Date.now()), created: Date.now(), updated: Date.now(), starred: false, raw: "", original: [], blocks: [], thumb: null, processing: true };
   lib.docs.push(d);
   const [thumb, send] = await Promise.all([makeThumb(file), shrink(file, 1600, 0.86)]);
   d.thumb = thumb; d.pending = send;
@@ -1588,9 +1661,211 @@ async function relayout() {
   }
 }
 
+/* ---------- language: 中文 / English ----------
+   The interface is written in Chinese; in English mode every interface text node and
+   label is swapped through this table as it appears. User content (notes, original
+   text, summaries, mind-map nodes, titles) is never translated. */
+const EN = {
+  // navigation and home
+  "首页": "Home", "文档": "Docs", "收藏": "Saved", "我的": "Me", "主导航": "Main navigation", "Recordo 首页": "Recordo home",
+  "搜索文档": "Search docs", "标题或任意内容": "Titles or any text", "搜索标题或内容": "Search titles or text",
+  "原文一字不改": "Every word kept", "扫描一页笔记": "Scan a page of notes", "自动理顺排版，生成可编辑的思维导图": "Tidy the layout and get an editable mind map",
+  "拍照": "Take photo", "上传图片": "Upload image", "相册": "Photos", "从相册选择": "Choose from photos", "工作方式": "How it works", "理顺排版": "Tidy layout", "生成导图": "Mind map",
+  "最近": "Recent", "全部": "See all", "扫描新页面": "Scan a page", "扫描新页面：拍照或上传": "Scan a page: take a photo or upload",
+  "还没有文档，点上面的拍照开始。": "No docs yet. Take a photo above to start.",
+  "没有找到": "Nothing found", "还没有文档": "No docs yet", "点下方的相机按钮扫描第一页": "Tap the camera button to scan your first page",
+  "还没有收藏": "Nothing saved yet", "在文档右上角点爱心即可收藏": "Tap the heart on any doc to save it here",
+  "识别失败": "Couldn't read", "示例": "Sample", "新扫描": "New scan", "未命名文档": "Untitled",
+  // me
+  "打开文档时显示": "When opening a doc", "默认视图": "Default view", "识别规则": "How text is handled",
+  "合并断行、拆开挤在一行的要点": "Joins broken lines and splits crowded bullets", "对齐列表层级，识别原文已有的标题": "Lines up list levels and keeps existing headings",
+  "不改写、不删减、不调换顺序": "Never rewrites, cuts or reorders", "每次识别都会逐字核对原文": "Every scan is checked word for word against the original",
+  "存储": "Storage", "清空所有文档": "Delete all docs", "说明": "About", "保存在这台设备的浏览器里": "Stored in this browser on this device",
+  "文档只保存在这台设备的浏览器里。照片会压缩后存一张预览图。": "Docs are stored only in this browser on this device. Photos are kept as a small preview.",
+  "文档只保存在这台设备上，不会上传到任何服务器。识别时，照片会发送给 Claude 处理。": "Docs stay on this device and are never uploaded. When you scan, the photo is sent to Claude to read.",
+  "清空所有文档？": "Delete all docs?", "这台设备上的所有文档都会被删除，无法撤销。": "Every doc on this device will be deleted. This can't be undone.", "清空": "Delete all", "已清空。": "All docs deleted.",
+  "语言": "Language", "界面语言": "Display language",
+  // document screen
+  "文档详情": "Document", "返回": "Back", "重命名": "Rename", "更多": "More", "视图": "Views",
+  "原文": "Original", "笔记": "Notes", "导图": "Mind map", "总结": "Summary",
+  "拍摄的原图": "Original photo", "识别出的原始文字": "Text as read from the photo", "原始识别文字": "Text as read", "直接修改识别错的字": "Fix any misread characters",
+  "没有识别文字。": "No text was read.", "思维导图": "Mind map", "节点操作": "Node actions",
+  "改字": "Edit", "子节点": "Child", "同级": "Sibling", "收起": "Collapse", "展开": "Expand", "删除": "Delete",
+  "缩放": "Zoom", "缩小": "Zoom out", "恢复 100%": "Reset to 100%", "放大": "Zoom in", "适合屏幕": "Fit to screen",
+  "正在识别并排版": "Reading and tidying", "停止": "Stop", "文档工具": "Doc tools",
+  "取消": "Cancel", "更多操作": "More actions", "复制笔记": "Copy notes", "导出 Markdown 文件": "Export Markdown file", "重新识别": "Scan again",
+  "恢复成识别结果": "Restore scanned version", "删除文档": "Delete doc", "文档名称": "Doc name", "保存": "Save", "确认": "Confirm",
+  "删除这篇文档？": "Delete this doc?", "已删除": "Deleted", "撤销": "Undo", "已撤销": "Undone", "完成": "Done",
+  "改错字": "Fix text", "还原原文": "Revert text", "看笔记": "Notes", "复制": "Copy", "导出": "Export", "看导图": "Mind map",
+  "重新生成": "Regenerate", "全部展开": "Expand all", "只看一级": "Top level", "已加入收藏": "Saved", "已从收藏中移除": "Removed from saved",
+  "已恢复成识别结果": "Restored the scanned version", "原文已修改": "Original edited",
+  "你改过原文里的字，笔记还是按改之前排的版。": "You edited the original text. The notes still follow the earlier version.",
+  "按新原文重新排版": "Re-tidy from new text", "按原文重新排版": "Re-tidy from original", "已核对 · 有修改": "Checked · edited", "与原文一致": "Matches original",
+  "! 与原文有出入": "! Differs from original", "之后你手动改过笔记。": "You've edited the notes since.", "（结束）": "(end)", "，笔记里是": ", the notes have", "。": ".",
+  "已还原成识别时的原文": "Reverted to the text as read", "笔记是空的": "The notes are empty", "添加一段": "Add a block",
+  "大标题": "Heading", "小标题": "Subheading", "段落": "Paragraph", "列表": "List", "段落格式": "Block format",
+  "减少缩进": "Outdent", "增加缩进": "Indent", "下方插入一段": "Insert block below", "下方插入": "Insert below", "在原文中查看": "Show in original",
+  "删除这一段": "Delete this block", "已删除这一段": "Block deleted",
+  "已复制，可以粘贴到其他笔记工具": "Copied. Paste it into any notes app.", "没能复制，可以用「导出」保存文件。": "Couldn't copy. Use Export to save a file.",
+  "浏览器不允许自动复制。": "This browser blocked copying.", "已导出": "Exported", "导出没有成功，请稍后再试。": "Export didn't work. Try again later.",
+  "点节点编辑 · 双指缩放": "Tap a node to edit · pinch to zoom", "新主题": "New topic", "新节点": "New node", "已删除节点": "Node deleted", "节点文字": "Node text",
+  // summary
+  "正在写总结": "Writing summary", "把这页笔记写成几段话": "Turn this page into a few paragraphs",
+  "先用一段话概括全文，再按小标题各写一段。只根据笔记内容，不补充外部信息。": "One paragraph for the whole page, then one per heading. Uses only what's in your notes.",
+  "生成总结": "Write summary", "生成总结之后，笔记又改过了。": "The notes changed after this summary was written.",
+  "全文概括": "Overview", "点任意一段就能修改。笔记和原文不受影响。": "Tap any paragraph to edit it. Your notes and the original stay as they are.",
+  "总结已复制": "Summary copied", "重新生成总结？": "Regenerate summary?", "你改过的总结内容会被新的总结替换。": "Your edits to this summary will be replaced.",
+  "要点": "Key points", "总结已生成": "Summary ready", "Claude 暂时到了用量上限，可以改用快速模式": "Claude hit its usage limit. Try quick mode.",
+  "快速模式": "Quick mode", "总结没有生成成功，请再试一次。": "The summary didn't finish. Try again.",
+  // recognition
+  "识别完成": "Done reading", "你停止了识别。": "You stopped the scan.", "识别被中断了。": "The scan was interrupted.",
+  "识别中断了，请检查网络后重试。": "The scan stopped. Check your connection and try again.", "正在按新原文重新排版": "Re-tidying from new text",
+  "已按新原文重新排版": "Re-tidied from new text", "重新排版中断了，请再试一次。": "Re-tidying stopped. Try again.",
+  "上一张还在识别，请稍等": "Still reading the last photo, one moment", "Claude 暂时忙不过来": "Claude is busy right now",
+  "没能识别这张照片": "Couldn't read this photo", "重试": "Retry", "用快速模式试试": "Try quick mode",
+  "快速模式用更轻量的模型，额度通常更宽裕，但识别准确度可能稍低。": "Quick mode uses a lighter model with more headroom, but it may be a little less accurate.",
+  "没有获得使用 Claude 的许可，所以无法识别。": "Claude wasn't allowed, so the photo can't be read.", "这个账号目前不能使用 Claude 识别。": "This account can't use Claude to read photos right now.",
+  "当前环境不支持发送图片。": "Images can't be sent from here.", "这张图片无法读取，请换一张 JPG 或 PNG，大小不超过 20MB。": "This image can't be read. Try a JPG or PNG under 20 MB.",
+  "Claude 的使用次数暂时到了上限。照片已经保存，过几分钟再点重试就行。": "Claude hit its usage limit. The photo is saved, so tap Retry in a few minutes.",
+  "登录已过期，请重新登录 Claude 后再试。": "Your session expired. Sign in to Claude again.", "这张图片无法处理，请换一张。": "This image can't be processed. Try another.",
+  "识别结果格式不完整，请重试。": "The result came back incomplete. Try again.", "没有得到结果，请换一张更清晰的照片。": "Nothing came back. Try a clearer photo.",
+  "内容太多了，请拍摄更小的区域。": "Too much on one page. Photograph a smaller area.",
+  "这个浏览器不允许保存数据，关掉页面后文档会丢失。": "This browser won't save data, so docs will be lost when you close the page.",
+  "本机空间不够，已去掉旧文档的预览图。": "Storage is full, so older previews were removed.", "本机存储空间不足，这次修改没有保存。": "Storage is full. This change wasn't saved.",
+  "在 Claude App 里打开这个页面就能识别照片。现在可以先看看示例文档。": "Open this page in the Claude app to read photos. Meanwhile, try the sample doc.",
+  "在 Claude App 里打开才能重试。": "Open in the Claude app to retry.", "在 Claude App 里打开这个页面，才能生成总结。": "Open this page in the Claude app to write summaries.",
+  "在 Claude App 里打开才能识别，先看看示例吧": "Open in the Claude app to scan. Try the sample meanwhile.",
+  "在 Claude App 里打开这个页面，才能识别照片。": "Open this page in the Claude app to read photos.",
+  // standalone app (PWA)
+  "去设置": "Set up", "连接识别服务后才能重试。": "Connect a reading service to retry.", "连接识别服务后才能生成总结。": "Connect a reading service to write summaries.",
+  "还没有连接识别服务": "No reading service connected",
+  "还没有连接识别服务。到「我的 › 识别服务」里设置好就能识别照片，现在可以先看看示例文档。": "No reading service is connected. Set one up in Me › Reading service to scan photos. Meanwhile, try the sample doc.",
+  "识别服务": "Reading service", "正在检测…": "Checking…", "连接设置": "Connection", "访问口令 · 个人 API Key": "Passcode · personal API key",
+  "安装到主屏幕": "Add to Home Screen", "离线使用": "Offline use", "正在准备离线缓存…": "Preparing offline copy…",
+  "把 Recordo 装到主屏幕": "Put Recordo on your Home Screen", "像普通 App 一样打开，没网也能看笔记": "Opens like an app, and your notes work offline",
+  "安装": "Install", "不再提示": "Don't show again", "识别服务设置": "Reading service", "访问口令": "Passcode", "部署时设置了 APP_PASSCODE 才需要填写": "Only needed if the server sets APP_PASSCODE",
+  "没有就留空": "Leave blank if none", "个人 Anthropic API Key": "Personal Anthropic API key", "没有部署服务器时使用": "Use this when there's no server",
+  "API Key 只保存在这台设备上，识别时直接发给 Anthropic。只建议在自己的手机上填写。": "The key is stored only on this device and sent straight to Anthropic when you scan. Only enter it on your own phone.",
+  "添加到主屏幕": "Add to Home Screen", "在 Safari 里打开这个页面": "Open this page in Safari", "点底部的分享按钮": "Tap the Share button at the bottom",
+  "选「添加到主屏幕」，再点「添加」": "Choose “Add to Home Screen”, then tap “Add”", "知道了": "Got it", "离线中 · 可以查看和编辑": "Offline · you can still view and edit",
+  "现在没有网络。照片已经保存，连上网后再点重试。": "You're offline. The photo is saved, so tap Retry once you're connected.",
+  "API Key 不正确，请到「我的 › 识别服务」里重新填写。": "That API key didn't work. Re-enter it in Me › Reading service.",
+  "访问口令不对，请到「我的 › 识别服务」里检查。": "Wrong passcode. Check it in Me › Reading service.", "服务器还没有配置 ANTHROPIC_API_KEY。": "The server has no ANTHROPIC_API_KEY set.",
+  "请求被拒绝了，可能是图片太大或格式不支持。": "The request was rejected. The image may be too large or an unsupported type.",
+  "Claude App 内置": "Built into the Claude app", "在 Claude 里打开时直接使用你的 Claude 账号": "Uses your Claude account when opened inside Claude",
+  "已连接服务器": "Server connected", "服务器设置了访问口令，请在连接设置里填写": "The server needs a passcode. Enter it under Connection.",
+  "照片通过部署的服务器发送给 Claude": "Photos go to Claude through your server", "使用个人 API Key": "Using your API key",
+  "照片直接发送给 Anthropic，费用记在你的 API 账户": "Photos go straight to Anthropic and are billed to your API account", "未连接": "Not connected",
+  "部署服务器，或在连接设置里填入个人 API Key": "Deploy the server, or add a personal API key under Connection", "还没有可用的识别服务": "No reading service available yet",
+  "已安装，正在以 App 方式运行": "Installed and running as an app", "点这里一键安装": "Tap to install", "在 Safari 用「分享 › 添加到主屏幕」": "In Safari, use Share › Add to Home Screen",
+  "用浏览器菜单里的「安装应用」或「添加到主屏幕」": "Use Install app or Add to Home Screen in your browser menu", "正在安装 Recordo": "Installing Recordo",
+  "请用浏览器菜单里的「安装应用」": "Use Install app in your browser menu", "已安装到主屏幕": "Added to Home Screen",
+  "已就绪：没网时也能打开、查看和编辑文档": "Ready: open, view and edit docs without a connection", "这个浏览器不支持离线缓存": "This browser can't keep an offline copy",
+  "需要通过 https 打开才能离线使用": "Open over https to use offline", "Recordo 有新版本": "A new version of Recordo is ready", "更新": "Update"
+};
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const dateEN = d => d.replace(/^今天 /, "Today ").replace(/^昨天 /, "Yesterday ").replace(/^(\d+)月(\d+)日$/, (m, a, b) => `${MON[a - 1]} ${b}`);
+const plural = (n, w) => `${n} ${w}${+n === 1 ? "" : "s"}`;
+const EN_RX = [
+  [/^(\d+) 篇文档$/, (m, n) => plural(n, "doc")],
+  [/^(今天|昨天) \d{1,2}:\d\d$|^\d+月\d+日$/, m => dateEN(m)],
+  [/^(.+?) · (\d+) 段$/, (m, d, n) => `${dateEN(d)} · ${plural(n, "block")}`],
+  [/^新扫描 (.+)$/, (m, d) => `New scan ${dateEN(d)}`],
+  [/^识别结果和原文逐字一致（共 (\d+) 字），只调整了换行和层级。(之后你手动改过笔记。)?$/, (m, n, e) => `Matches the original word for word (${n} characters); only line breaks and levels changed.${e ? " You've edited the notes since." : ""}`],
+  [/^从第 (\d+) 个字开始不一致：原文是$/, (m, n) => `Differs from character ${n}: the original has`],
+  [/^已删除节点和 (\d+) 个子节点$/, (m, n) => `Deleted the node and ${plural(n, "child node")}`],
+  [/^(\d+) 秒 · 通常 20–60 秒$/, (m, n) => `${n}s · usually 20–60s`],
+  [/^· (\d+) 秒$/, (m, n) => `· ${n}s`],
+  [/^第 (\d+) 段$/, (m, n) => `Block ${n}`],
+  [/^没有包含「(.*)」的文档$/, (m, q) => `No docs contain “${q}”`],
+  [/^「(.*)」会从这台设备上删除。$/, (m, t) => `“${t}” will be deleted from this device.`],
+  [/^图片里没有找到可识别的文字(?:：(.*?))?。?$/, (m, r) => `No readable text found in the image${r ? ": " + r : "."}`],
+  [/^AI 总结 · 根据笔记生成( · 快速模式)?$/, (m, q) => `AI summary · from your notes${q ? " · quick mode" : ""}`],
+  [/^已保存，识别服务：(.*)$/, (m, r) => `Saved. Reading service: ${EN[r] || r}`]
+];
+const CJK = /[㐀-鿿！-～「」…]/;
+const NOTR = "#notes, #raw, #rawText, #map, #sumBody p[data-k], .sum-sec h3, .doc-title, .card .t, .row .t, .medit, .checkd code, .no-tr, script, style";
+const TR_ATTRS = ["aria-label", "placeholder", "title"];
+let lang = "zh";
+const L = (zh, en) => lang === "en" ? en : zh;
+function trText(v) {
+  const k = v.replace(/ /g, " ").trim();
+  if (!k || !CJK.test(k)) return null;
+  let out = EN[k];
+  if (out == null) for (const [re, fn] of EN_RX) { const m = k.match(re); if (m) { out = fn(...m); break; } }
+  if (out == null) return null;
+  const lead = v.match(/^\s*/)[0], tail = v.match(/\s*$/)[0];
+  return lead + out + tail;
+}
+const trDone = new Set();        // nodes/attrs changed, so they can be put back
+const trOrig = new WeakMap();    // text node → Chinese
+const trAttrOrig = new WeakMap(); // element → {attr: Chinese}
+function trNode(n) {
+  const p = n.parentElement; if (!p || p.closest(NOTR)) return;
+  const v = n.nodeValue, out = trText(v);
+  if (out == null || out === v) return;
+  trOrig.set(n, v); trDone.add(n); n.nodeValue = out;
+}
+function trEl(el) {
+  if (el.closest(NOTR)) return;
+  for (const a of TR_ATTRS) {
+    const v = el.getAttribute(a); if (v == null) continue;
+    const out = trText(v); if (out == null || out === v) continue;
+    const o = trAttrOrig.get(el) || {}; o[a] = v; trAttrOrig.set(el, o); trDone.add(el); el.setAttribute(a, out);
+  }
+}
+function trTree(root) {
+  if (root.nodeType === 3) return trNode(root);
+  if (root.nodeType !== 1) return;
+  trEl(root);
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
+  for (let n = w.nextNode(); n; n = w.nextNode()) n.nodeType === 3 ? trNode(n) : trEl(n);
+}
+const trObserver = new MutationObserver(list => {
+  if (lang !== "en") return;
+  for (const m of list) {
+    if (m.type === "childList") m.addedNodes.forEach(trTree);
+    else if (m.type === "characterData") trNode(m.target);
+    else if (m.type === "attributes") trEl(m.target);
+  }
+});
+function untranslateAll() {
+  for (const n of trDone) {
+    if (n.nodeType === 3) { if (trOrig.has(n)) n.nodeValue = trOrig.get(n); }
+    else { const o = trAttrOrig.get(n); if (o) for (const a in o) n.setAttribute(a, o[a]); }
+  }
+  trDone.clear();
+}
+function paintLangControls() {
+  document.querySelectorAll("[data-lang]").forEach(b => b.setAttribute("aria-pressed", b.dataset.lang === lang));
+  document.querySelectorAll(".langbtn").forEach(b => { b.textContent = lang === "en" ? "中文" : "EN"; b.setAttribute("aria-label", lang === "en" ? "切换到中文" : "Switch to English"); });
+}
+function setLang(l, initial) {
+  lang = l === "en" ? "en" : "zh";
+  settings.lang = lang; saveSettings();
+  document.documentElement.lang = lang === "en" ? "en" : "zh-CN";
+  untranslateAll();
+  paintLangControls();
+  if (initial) { if (lang === "en") trTree(document.body); return; }
+  // redraw what is on screen so generated text comes out in the new language
+  if (screen === "doc" && doc) { renderDocHead(); setView(view); } else go(screen);
+  if (lang === "en") trTree(document.body);
+  if (typeof refreshEnv === "function") try { refreshEnv(); } catch {}
+  if (typeof refreshInstall === "function") try { refreshInstall(); } catch {}
+}
+function initLang() {
+  const pref = settings.lang || ((navigator.language || "").toLowerCase().startsWith("zh") ? "zh" : "en");
+  trObserver.observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: TR_ATTRS });
+  setLang(pref, true);
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-lang]"); if (b) { setLang(b.dataset.lang); return; }
+  if (e.target.closest(".langbtn")) setLang(lang === "en" ? "zh" : "en");
+});
+
 /* ---------- boot ---------- */
 paintIcons();
-drawSamplePhoto(); load();
+drawSamplePhoto(); load(); initLang();
 let start = "home"; try { start = localStorage.getItem("recordo.screen") || "home"; } catch {}
 lastTab = TABS.includes(start) ? start : "home"; go(lastTab);
 document.fonts?.ready?.then(() => { drawSamplePhoto(); if (screen === "doc" && view === "map") renderMap(); else if (screen !== "doc") go(screen); });
